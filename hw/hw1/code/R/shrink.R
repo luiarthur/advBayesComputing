@@ -13,9 +13,10 @@ Sig_Maker <- function(rho,p) {
   M
 }
 
-n <- c(50, 500)
+#n <- c(50, 500)
 #p <- c(100, 1000)
-p <- c(100)
+n <- c(50, 100)
+p <- c(100,200)
 Sig_Makers <- list( function(p) diag(p), function(p) Sig_Maker(.1,p), function(p) Sig_Maker(.6,p) )
 betas <- list( function(p) {b <- rep(0,p); b[1:5] <- 3; b }, 
                function(p) {b <- rep(0,p); b[1:5] <- 5; b[6:10] <- -2; b[11:15] <- .5; b },
