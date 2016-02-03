@@ -1,13 +1,14 @@
+set.seed(268)
+
 library(MASS) # ridge.lm
 library(glmnet) #cv.glmnet(x,y): lasso
-library(Rcpp)
-#sourceCpp("xxx.cpp")
-
-Sys.setenv("PKG_CXXFLAGS"="-std=c++11") # enable c++11, for RcppArmadillo
-
-
 library(doMC)
 registerDoMC(ncore <- as.numeric(system("nproc",intern=T)))
+
+library(Rcpp)
+Sys.setenv("PKG_CXXFLAGS"="-std=c++11") # enable c++11, for RcppArmadillo
+sourceCpp("../C++/spikeAndSlab.cpp")
+
 
 mvrnorm <- function(M,S,n=nrow(S)) M + t(chol(S)) %*% rnorm(n)
 
@@ -76,4 +77,9 @@ for (nn in n) {
 }
 
 
-
+sourceCpp("../C++/spikeAndSlab.cpp")
+ss.mod <- spikeAndSlab(y=y, x=x, p=.5, d=1e-20, c=10, cs=rep(2,ncol(x)), B=10000, printProg=T)
+ss.b <- ss.mod$beta
+plot(ss.b[,2],type='l')
+prop <- apply(ss.b, 2, function(x) mean(round(x,5)==0))
+order(prop)
