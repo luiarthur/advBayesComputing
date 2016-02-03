@@ -1,5 +1,10 @@
 library(MASS) # ridge.lm
 library(glmnet) #cv.glmnet(x,y): lasso
+library(Rcpp)
+#sourceCpp("xxx.cpp")
+
+Sys.setenv("PKG_CXXFLAGS"="-std=c++11") # enable c++11, for RcppArmadillo
+
 
 library(doMC)
 registerDoMC(ncore <- as.numeric(system("nproc",intern=T)))
