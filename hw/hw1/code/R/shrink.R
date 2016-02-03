@@ -1,4 +1,5 @@
 library(MASS) # ridge.lm
+library(glmnet) #cv.glmnet(x,y): lasso
 
 library(doMC)
 registerDoMC(ncore <- as.numeric(system("nproc",intern=T)))
@@ -20,13 +21,14 @@ Sig_Maker <- function(rho,p) {
 n <- c(50, 100)
 p <- c(100,200)
 Sig_Makers <- list( function(p) diag(p), function(p) Sig_Maker(.1,p), function(p) Sig_Maker(.6,p) )
-betas <- list( function(p) {b <- rep(0,p); b[1:5] <- 3; b <- c(1,b); b }, 
-               function(p) {b <- rep(0,p); b[1:5] <- 5; b[6:10] <- -2; b[11:15] <- .5; b <- c(1,b); b },
+betas <- list( function(p) {b <- rep(0,p); b[1:5] <- 3; b <- c(0,b); b }, 
+               function(p) {b <- rep(0,p); b[1:5] <- 5; b[6:10] <- -2; b[11:15] <- .5; b <- c(0,b); b },
                function(p) {b <- rep(1,p); b <- c(1,b); b })
 
 numdat <- length(n) * length(p) * length(Sig_Makers) * length(betas)
 counter <- 0
-dat <- as.list(1:numdat)
+#dat <- as.list(1:numdat)
+mod <- as.list(1:numdat)
 
 
 for (nn in n) {
@@ -43,9 +45,10 @@ for (nn in n) {
 
         # 2a)
         # Run Lasso
+        lasso.mod <- cv.glmnet(x[,-1],y)
 
         # Run Ridge
-        mod <- lm.ridge(y~x[,-1])
+        ridge.mod <- lm.ridge(y~x[,-1])
 
         # 2b)
         # Run Bayesian spike and slab (S&S)
@@ -59,6 +62,7 @@ for (nn in n) {
 
 
         #dat[[counter]] <- list("y"=y, "x"=x, "S"=s, "n"=nn, "p"=pp)
+        mod[[counter]] <- list("lasso_mod"=lasso.mod, "ridge_mod"=ridge.mod)
 
         cat("\r n: ", nn, ";  p: ", pp, "; counter: ", counter)
       }
