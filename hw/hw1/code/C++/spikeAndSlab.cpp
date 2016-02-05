@@ -57,6 +57,7 @@ List spikeAndSlab(vec y, mat x, vec tau2, double g, vec w, vec cs, int B, bool p
   double p1, lp1, lp0;
   vec bvec_curr, bvec_cand;
   mat gam = zeros<mat>(B,J);
+  int dummy;
   List ret;
 
 
@@ -73,6 +74,8 @@ List spikeAndSlab(vec y, mat x, vec tau2, double g, vec w, vec cs, int B, bool p
 
       lg_curr = ll(y, x, bvec_curr) + lpj(curr, gam(b,j), tau2[j], g);
       lg_cand = ll(y, x, bvec_cand) + lpj(cand, gam(b,j), tau2[j], g);
+
+      Rcout << lg_cand - lg_curr << endl;
 
       if (lg_cand - lg_curr > log(randu())) {
         beta(b,j) = cand;
