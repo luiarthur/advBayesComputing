@@ -78,7 +78,9 @@ for (nn in n) {
 
 
 sourceCpp("../C++/spikeAndSlab.cpp")
-ss.mod <- spikeAndSlab(y=y, x=x, p=.5, d=1e-20, c=10, cs=rep(2,ncol(x)), B=10000, printProg=T)
+ss.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, rep(.5,ncol(x)), cs=rep(2,ncol(x)), B=10000, printProg=T)
+ss.mod$beta_acc
+ss.mod$gam_acc
 ss.b <- ss.mod$beta
 plot(ss.b[,2],type='l')
 prop <- apply(ss.b, 2, function(x) mean(round(x,5)==0))
