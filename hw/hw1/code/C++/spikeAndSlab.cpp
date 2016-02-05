@@ -16,18 +16,28 @@ double wsample( vec x, vec prob ) {
   return ret[0] ;
 }
 
-double pdfnorm (double x, double m, double s2) {
-  return exp(-.5 * pow(x-m,2.0)/s2) / sqrt(2*pi*s2);
+double ldnorm (double x, double m, double s2) {
+  return -.5 * pow(x-m, 2.0) / s2;
 }
+
+double pdfnorm (double x, double m, double s2) {
+  return exp(-.5 * pow(x-m, 2.0) / s2) / sqrt(2*pi*s2);
+}
+
 
 double lpj (double bj, double gamj, double tau2j, double g) {
   double prior;
-  prior = (1-gamj) * pdfnorm(bj,0,tau2j) + gamj * pdfnorm(bj,0,g*tau2j);
-  return log(prior);
-}
+  double out;
 
-double lhp(double gamj, double wj) {
-  return gamj * log(wj) + (1-gamj) * log(1-wj);
+  prior = (1-gamj) * pdfnorm(bj,0,tau2j) + gamj * pdfnorm(bj,0,g*tau2j);
+  out = log(prior);
+
+  //if (gamj > randu()) {
+  //  out = -bj*bj / (2*g*tau2j);
+  //} else {
+  //  out = -bj*bj / (2*tau2j);
+  //}
+  return out;
 }
 
 double ll (vec y, mat x, vec beta) {
@@ -42,9 +52,9 @@ List spikeAndSlab(vec y, mat x, vec tau2, double g, vec w, vec cs, int B, bool p
   int J = x.n_cols;
   mat beta = zeros<mat>(B,J);
   vec beta_acc = zeros<vec>(J);
-  vec gam_acc = zeros<vec>(J);
   double cand, curr;
   double lg_cand, lg_curr;
+  double p1, lp1, lp0;
   vec bvec_curr, bvec_cand;
   mat gam = zeros<mat>(B,J);
   List ret;
@@ -70,16 +80,10 @@ List spikeAndSlab(vec y, mat x, vec tau2, double g, vec w, vec cs, int B, bool p
       }
 
       // Update gamma
-      gam(b,j) = gam(b-1,j);
-      curr = gam(b,j);
-      cand = wsample({0.0,1.0}, {.5,.5});
-      lg_curr = lpj(beta(b,j), curr, tau2[j], g) + lhp(curr,w[j]);
-      lg_cand = lpj(beta(b,j), cand, tau2[j], g) + lhp(cand,w[j]);
-
-      if (lg_cand - lg_curr > log(randu())) {
-        gam(b,j) = cand;
-        gam_acc[j] = gam_acc[j] + 1;
-      }
+      lp1 = ldnorm(beta(b,j),0,g*tau2[j]) + log(w[j]);
+      lp0 = ldnorm(beta(b,j),0,tau2[j]) + log(1-w[j]);
+      p1 = 1 / ( 1 + exp(lp0 - lp1) );
+      gam(b,j) = wsample( {1.0,0.0}, {p1,1-p1} );
     }
     if (printProg) Rcout << "\rProgress: " << b << "/" << B;
   }
@@ -87,7 +91,6 @@ List spikeAndSlab(vec y, mat x, vec tau2, double g, vec w, vec cs, int B, bool p
   ret["beta"] = beta;
   ret["gam"] = gam;
   ret["beta_acc"] = beta_acc;
-  ret["gam_acc"] = gam_acc;
 
   return ret;
 }

@@ -36,6 +36,8 @@ counter <- 0
 #dat <- as.list(1:numdat)
 mod <- as.list(1:numdat)
 
+Sig <- Sig_Makers[[1]](100);
+beta <- betas[[1]](100)
 
 for (nn in n) {
   for (pp in p) {
@@ -76,12 +78,13 @@ for (nn in n) {
   }
 }
 
-
 sourceCpp("../C++/spikeAndSlab.cpp")
-ss.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, rep(.5,ncol(x)), cs=rep(2,ncol(x)), B=10000, printProg=T)
-ss.mod$beta_acc
-ss.mod$gam_acc
+B <- 1000
+ss.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, w=rep(.5,ncol(x)), cs=rep(.002,ncol(x)), B=B, printProg=T)
+ss.mod$beta_acc / B
 ss.b <- ss.mod$beta
-plot(ss.b[,2],type='l')
-prop <- apply(ss.b, 2, function(x) mean(round(x,5)==0))
+ss.g <- ss.mod$gam
+apply(ss.g,2,mean)
+par(mfrow=c(2,1)); plot(ss.b[,1],type='l'); abline(h=0,lwd=3,col='red'); plot(ss.b[,10],type='l'); abline(h=0,lwd=3,col='red'); par(mfrow=c(1,1))
+prop <- apply(ss.b, 2, function(x) mean(round(x,5)==0)); head(prop)
 order(prop)
