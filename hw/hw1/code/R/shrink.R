@@ -36,6 +36,7 @@ counter <- 0
 #dat <- as.list(1:numdat)
 mod <- as.list(1:numdat)
 
+# Temp
 Sig <- Sig_Makers[[1]](100);
 beta <- betas[[1]](100)
 
@@ -47,7 +48,8 @@ for (nn in n) {
 
         # 1) Simulate the data
         Sig <- ss(pp)
-        x <- foreach(i=1:nn,.combine=rbind) %dopar% c( 1 ,c(mvrnorm(0,Sig)) )
+        #x <- foreach(i=1:nn,.combine=rbind) %dopar% c( 1 ,c(mvrnorm(0,Sig)) )
+        x <- t(sapply( 1:nn, function(x) c(1, mvrnorm(0,Sig)) ))
         beta <- bb(pp)
         y <- x %*% beta + rnorm(nn)
 
@@ -60,6 +62,7 @@ for (nn in n) {
 
         # 2b)
         # Run Bayesian spike and slab (S&S)
+        spike.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, w=rep(.5,ncol(x)), B=2000, burn=500, printProg=F)
         # Run Bayesian Lasso
         # Run Bayesian Generalized Double Pareto
         # - For all theses Bayesian models, get E(\beta_j | y)
@@ -70,7 +73,7 @@ for (nn in n) {
 
 
         #dat[[counter]] <- list("y"=y, "x"=x, "S"=s, "n"=nn, "p"=pp)
-        mod[[counter]] <- list("lasso_mod"=lasso.mod, "ridge_mod"=ridge.mod)
+        mod[[counter]] <- list("lasso_mod"=lasso.mod, "ridge_mod"=ridge.mod, "spike_mod"=spike.mod)
 
         cat("\r n: ", nn, ";  p: ", pp, "; counter: ", counter)
       }
@@ -78,13 +81,14 @@ for (nn in n) {
   }
 }
 
-sourceCpp("../C++/spikeAndSlab.cpp")
-B <- 1000
-ss.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, w=rep(.5,ncol(x)), cs=rep(.002,ncol(x)), B=B, printProg=T)
-ss.mod$beta_acc / B
-ss.b <- ss.mod$beta
-ss.g <- ss.mod$gam
-apply(ss.g,2,mean)
-par(mfrow=c(2,1)); plot(ss.b[,1],type='l'); abline(h=0,lwd=3,col='red'); plot(ss.b[,10],type='l'); abline(h=0,lwd=3,col='red'); par(mfrow=c(1,1))
-prop <- apply(ss.b, 2, function(x) mean(round(x,5)==0)); head(prop)
-order(prop)
+# Spike and Slab working!
+#sourceCpp("../C++/spikeAndSlab.cpp")
+#B <- 1500
+#burn <- 500
+#ss.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, w=rep(.5,ncol(x)), B=B+burn, burn=burn, printProg=T)
+#ss.b <- ss.mod$beta
+#ss.g <- ss.mod$gam
+#(post.gam <- round(apply(ss.g,2,mean),5))
+#(post.beta <- round(apply(ss.b, 2, mean),5))
+#order(post.beta,decreasing=T)
+#par(mfrow=c(3,1)); plot(ss.b[,1]); plot(ss.b[,3]); plot(ss.b[,10]); par(mfrow=c(1,1))

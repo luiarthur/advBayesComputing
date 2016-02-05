@@ -17,83 +17,61 @@ double wsample( vec x, vec prob ) {
 }
 
 double ldnorm (double x, double m, double s2) {
-  return -.5 * pow(x-m, 2.0) / s2;
+  return -.5*log(s2) -.5 * pow(x-m, 2.0) / s2;
 }
 
-double pdfnorm (double x, double m, double s2) {
-  return exp(-.5 * pow(x-m, 2.0) / s2) / sqrt(2*pi*s2);
+vec mvrnorm(vec m, mat S) {
+  int n = m.size();
+  vec e = randn(n);
+  return m + chol(S).t() * e;
 }
 
-
-double lpj (double bj, double gamj, double tau2j, double g) {
-  double prior;
-  double out;
-
-  prior = (1-gamj) * pdfnorm(bj,0,tau2j) + gamj * pdfnorm(bj,0,g*tau2j);
-  out = log(prior);
-
-  //if (gamj > randu()) {
-  //  out = -bj*bj / (2*g*tau2j);
-  //} else {
-  //  out = -bj*bj / (2*tau2j);
-  //}
-  return out;
-}
-
-double ll (vec y, mat x, vec beta) {
-  vec m = (y - x * beta);
-  double out = -sum(m.t() * m) / 2;
-  return out;
-}
+//Working!
 
 //[[Rcpp::export]]
-List spikeAndSlab(vec y, mat x, vec tau2, double g, vec w, vec cs, int B, bool printProg) {
+List spikeAndSlab(vec y, mat x, vec tau2, double g, vec w, int B, int burn, bool printProg) {
   int n = y.size();
   int J = x.n_cols;
-  mat beta = zeros<mat>(B,J);
-  vec beta_acc = zeros<vec>(J);
-  double cand, curr;
-  double lg_cand, lg_curr;
-  double p1, lp1, lp0;
-  vec bvec_curr, bvec_cand;
+  mat beta = ones<mat>(B,J);
+  double p1, p0, lp1, lp0;
   mat gam = zeros<mat>(B,J);
+  mat xx = x.t() * x;
+  mat xy = x.t() * y;
+  mat D2 = eye<mat>(J,J);
   int dummy;
   List ret;
+  vec m;
+  mat S;
 
 
   for (int b=1; b<B; b++) {
+
+    // Update beta
+    S = (xx + D2.i()).i();
+    m = S * xy;
+    beta.row(b) = reshape(mvrnorm(m,S),1,J);
+
+    // Update gamma
     for (int j=0; j<J; j++) {
-
-      // Update beta
-      beta(b,j) = beta(b-1,j); 
-      curr = beta(b,j);
-      cand = randn() * cs[j] + curr;
-      bvec_curr = vectorise( beta.row(b) );
-      bvec_cand = bvec_curr;
-      bvec_cand(j) = cand;
-
-      lg_curr = ll(y, x, bvec_curr) + lpj(curr, gam(b,j), tau2[j], g);
-      lg_cand = ll(y, x, bvec_cand) + lpj(cand, gam(b,j), tau2[j], g);
-
-      Rcout << lg_cand - lg_curr << endl;
-
-      if (lg_cand - lg_curr > log(randu())) {
-        beta(b,j) = cand;
-        beta_acc[j] = beta_acc[j] + 1;
-      }
-
-      // Update gamma
       lp1 = ldnorm(beta(b,j),0,g*tau2[j]) + log(w[j]);
       lp0 = ldnorm(beta(b,j),0,tau2[j]) + log(1-w[j]);
-      p1 = 1 / ( 1 + exp(lp0 - lp1) );
-      gam(b,j) = wsample( {1.0,0.0}, {p1,1-p1} );
+
+      p0 = exp( lp0 - max({lp0,lp1}) );
+      p1 = exp( lp1 - max({lp0,lp1}) );
+
+      gam(b,j) = wsample( {0,1}, {p0,p1} );
+      if ( gam(b,j) == 1 ) {
+        D2(j,j) = g * tau2[j];
+      } else {
+        D2(j,j) = tau2[j];
+      }
     }
+
     if (printProg) Rcout << "\rProgress: " << b << "/" << B;
   }
 
-  ret["beta"] = beta;
-  ret["gam"] = gam;
-  ret["beta_acc"] = beta_acc;
+  ret["beta"] = beta.rows(burn,B-1);
+  ret["gam"] = gam.rows(burn,B-1);
 
   return ret;
 }
