@@ -1,5 +1,5 @@
 //[[Rcpp::depends(RcppArmadillo)]]
-#include <func.h> // wsample, ldnorm, mvrnorm
+#include <func.cpp> // wsample, ldnorm, mvrnorm
 
 //Working!
 

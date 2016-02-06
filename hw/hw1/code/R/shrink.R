@@ -82,9 +82,16 @@ for (nn in n) {
   }
 }
 
+sourceCpp("../C++/func.cpp")
+
 # Bayesian Lasso
 sourceCpp("../C++/blasso.cpp")
-blasso.mod <- blasso(y=y,x=x,r=1,delta=1,B=500,burn=200, printProg=T)
+blasso.mod <- blasso(y=y,x=x,r=1,delta=1.5,B=1200,burn=200, printProg=T)
+bl.b <- blasso.mod$beta
+plot(apply(bl.b,2,mean))
+plot(apply(blasso.mod$t2,2,mean))
+plot(blasso.mod$lam)
+hist(blasso.mod$lam)
 
 # Spike and Slab working!
 sourceCpp("../C++/spikeAndSlab.cpp")

@@ -1,5 +1,5 @@
 //[[Rcpp::depends(RcppArmadillo)]]
-#include <func.h> // wsample, ldnorm, mvrnorm
+#include <func.cpp> // wsample, ldnorm, mvrnorm
 
 
 //[[Rcpp::export]]
@@ -13,11 +13,11 @@ List blasso(vec y, mat x, double r, double delta, int B, int burn, bool printPro
   mat outvec = zeros<mat>(B-burn,1);
   mat S = zeros<mat>(J,J);
   mat D = eye(J,J);
-  vec m = zeros<vec>(J);
   mat t2 = ones<mat>(B,J);
   double sh = J+r;
   double sc;
   double l2;
+  double tin;
   List ret;
 
 
@@ -25,9 +25,13 @@ List blasso(vec y, mat x, double r, double delta, int B, int burn, bool printPro
 
     // Update t2
     for (int j=0; j<J; j++) {
-      l2 = lam[b-1] * lam[b-1];
-      t2(b,j) = 1 / rinvGaussian(sqrt(l2/beta(b-1,j)),l2);
-      D(j,j) = 1;
+      tin = rinvGaussian( lam[b-1]/abs(beta(b-1,j)), lam[b-1]*lam[b-1]);
+      //cout << tin << ",  ";
+      //if (tin < .0001) {
+      //  tin = .0001;
+      //}
+      t2(b,j) = 1 / tin;
+      D(j,j) = t2(b,j);
     }
 
     // Update beta
@@ -35,8 +39,8 @@ List blasso(vec y, mat x, double r, double delta, int B, int burn, bool printPro
     beta.row(b) = reshape(mvrnorm(S*xy,S),1,J);
     
     // Update lambda
-    sc = sum(t2.row(b))/2 + delta;
-    lam[b] = rgamma(1,sh,1/sc)[0]; // shape and rate
+    sc = 1 / (sum(t2.row(b))/2 + delta);
+    lam[b] = sqrt( rgamma(1,sh,sc)[0] ); // shape and scale
     
     if (printProg) Rcout << "\rProgress: " << b << "/" << B;
   }
