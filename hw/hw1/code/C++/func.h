@@ -27,3 +27,18 @@ vec mvrnorm(vec m, mat S) {
   return m + chol(S).t() * e;
 }
 
+double rinvGaussian(double m, double s) {
+  double out;
+  double v = randn();
+  double y = v*v;
+  double x = m + (m*m*y)/(2*s) - (m/(2*s)) * sqrt(4*m*s*y + m*m*y*y);
+  double u = randu();
+
+  if (u <= m/(m+x)) {
+    out = x;
+  } else {
+    out = m*m/x;
+  }
+
+  return out;
+}
