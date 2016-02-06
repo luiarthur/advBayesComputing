@@ -8,6 +8,7 @@ registerDoMC(ncore <- as.numeric(system("nproc",intern=T)))
 library(Rcpp)
 Sys.setenv("PKG_CXXFLAGS"="-std=c++11") # enable c++11, for RcppArmadillo
 sourceCpp("../C++/spikeAndSlab.cpp")
+sourceCpp("../C++/blasso.cpp")
 
 
 mvrnorm <- function(M,S,n=nrow(S)) M + t(chol(S)) %*% rnorm(n)
@@ -33,74 +34,58 @@ betas <- list( function(p) {b <- rep(0,p); b[1:5] <- 3; b <- c(0,b); b },
 
 numdat <- length(n) * length(p) * length(Sig_Makers) * length(betas)
 counter <- 0
-#dat <- as.list(1:numdat)
 mod <- as.list(1:numdat)
 
+
+# - For all theses Bayesian models, get E(\beta_j | y)
+# - discuss accuracy wrt to a metric
+# - Compare Lasso and S&S for variable selection
+# - Compute mean(L_j: beta_j == 0)
+# - posterior pred.
+
 # Temp
-Sig <- Sig_Makers[[1]](100);
-beta <- betas[[1]](100)
+#Sig <- Sig_Makers[[1]](100);
+#beta <- betas[[1]](100)
 
-for (nn in n) {
-  for (pp in p) {
-    for (ss in Sig_Makers) {
-      for (bb in betas) {
-        counter <- counter + 1
-
-        # 1) Simulate the data
-        Sig <- ss(pp)
-        #x <- foreach(i=1:nn,.combine=rbind) %dopar% c( 1 ,c(mvrnorm(0,Sig)) )
-        x <- t(sapply( 1:nn, function(x) c(1, mvrnorm(0,Sig)) ))
-        beta <- bb(pp)
-        y <- x %*% beta + rnorm(nn)
-
-        # 2a)
-        # Run Lasso
-        lasso.mod <- cv.glmnet(x[,-1],y)
-
-        # Run Ridge
-        ridge.mod <- lm.ridge(y~x[,-1])
-
-        # 2b)
-        # Run Bayesian spike and slab (S&S)
-        spike.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, w=rep(.5,ncol(x)), B=2000, burn=500, printProg=F)
-
-        # Run Bayesian Lasso
-        # Run Bayesian Generalized Double Pareto
-        # - For all theses Bayesian models, get E(\beta_j | y)
-        # - discuss accuracy wrt to a metric
-        # - Compare Lasso and S&S for variable selection
-        # - Compute mean(L_j: beta_j == 0)
-        # - posterior pred.
-
-
-        #dat[[counter]] <- list("y"=y, "x"=x, "S"=s, "n"=nn, "p"=pp)
-        mod[[counter]] <- list("lasso_mod"=lasso.mod, "ridge_mod"=ridge.mod, "spike_mod"=spike.mod)
-
-        cat("\r n: ", nn, ";  p: ", pp, "; counter: ", counter)
-      }
-    }
-  }
+oneSim <- function(n_i,p_i,S_i,beta_i) {
+  param_index <- list("n"=n_i,"p"=p_i,"S"=S_i,"beta"=beta_i)
+  print( paste0( c("n: ","p: ","S: ","beta: "), unlist(param_index) ))
+  x <- t(sapply( 1:(n[[n_i]]), function(x) c(1, mvrnorm(0,Sig_Makers[[S_i]](p[[p_i]]))) ))
+  y <- x %*% betas[[beta_i]](p[[p_i]]) + rnorm(n[[n_i]])
+  lasso.mod <- cv.glmnet(x[,-1],y)
+  ridge.mod <- lm.ridge(y~x[,-1])
+  spike.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, w=rep(.5,ncol(x)), B=2000, burn=500, printProg=F)
+  blasso.mod <- blasso(y=y,x=x,r=1,delta=1.5,B=1200,burn=200, printProg=F)
+  gdp.mod <- "not complete"
+  mod <- list("lasso_mod"=lasso.mod, "ridge_mod"=ridge.mod, "spike_mod"=spike.mod, "blasso_mod"=blasso.mod, "gdp_mod"=gdp.mod, "param_index"=param_index)
+  mod
 }
 
-sourceCpp("../C++/func.cpp")
+mod.params.ind <- as.list(1:numdat); counter <- 0
+for (n_i in 1:length(n)) for (p_i in 1:length(p)) for (S_i in 1:length(Sig_Makers)) for (beta_i in 1:length(betas)) {
+  counter <- counter + 1
+  mod.params.ind[[counter]] <- list("n"=n_i,"p"=p_i,"S"=S_i,"beta"=beta_i)
+}
 
-# Bayesian Lasso
-sourceCpp("../C++/blasso.cpp")
-blasso.mod <- blasso(y=y,x=x,r=1,delta=1.5,B=1200,burn=200, printProg=T)
-bl.b <- blasso.mod$beta
-plot(apply(bl.b,2,mean))
-plot(apply(blasso.mod$t2,2,mean))
-plot(blasso.mod$lam)
-hist(blasso.mod$lam)
+mod <- foreach(mpi=mod.params.ind) %dopar% oneSim(mpi$n,mpi$p,mpi$S,mpi$beta)
 
-# Spike and Slab working!
-sourceCpp("../C++/spikeAndSlab.cpp")
-B <- 1500
-burn <- 500
-ss.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, w=rep(.5,ncol(x)), B=B+burn, burn=burn, printProg=T)
-ss.b <- ss.mod$beta
-ss.g <- ss.mod$gam
-(post.gam <- round(apply(ss.g,2,mean),5))
-(post.beta <- round(apply(ss.b, 2, mean),5))
-order(post.beta,decreasing=T)
-par(mfrow=c(3,1)); plot(ss.b[,1]); plot(ss.b[,3]); plot(ss.b[,10]); par(mfrow=c(1,1))
+# Bayesian Lasso WORKING!
+#sourceCpp("../C++/blasso.cpp")
+#blasso.mod <- blasso(y=y,x=x,r=1,delta=1.5,B=1200,burn=200, printProg=T)
+#bl.b <- blasso.mod$beta
+#plot(apply(bl.b,2,mean))
+#plot(apply(blasso.mod$t2,2,mean))
+#plot(blasso.mod$lam)
+#hist(blasso.mod$lam)
+
+# Spike and Slab WORKING!
+#sourceCpp("../C++/spikeAndSlab.cpp")
+#B <- 1500
+#burn <- 500
+#ss.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, w=rep(.5,ncol(x)), B=B+burn, burn=burn, printProg=T)
+#ss.b <- ss.mod$beta
+#ss.g <- ss.mod$gam
+#(post.gam <- round(apply(ss.g,2,mean),5))
+#(post.beta <- round(apply(ss.b, 2, mean),5))
+#order(post.beta,decreasing=T)
+#par(mfrow=c(3,1)); plot(ss.b[,1]); plot(ss.b[,3]); plot(ss.b[,10]); par(mfrow=c(1,1))
