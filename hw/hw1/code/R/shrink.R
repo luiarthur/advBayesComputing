@@ -63,6 +63,7 @@ for (nn in n) {
         # 2b)
         # Run Bayesian spike and slab (S&S)
         spike.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, w=rep(.5,ncol(x)), B=2000, burn=500, printProg=F)
+
         # Run Bayesian Lasso
         # Run Bayesian Generalized Double Pareto
         # - For all theses Bayesian models, get E(\beta_j | y)
@@ -81,14 +82,18 @@ for (nn in n) {
   }
 }
 
+# Bayesian Lasso
+sourceCpp("../C++/blasso.cpp")
+blasso.mod <- blasso(y=y,x=x,r=1,delta=1,B=500,burn=200, printProg=T)
+
 # Spike and Slab working!
-#sourceCpp("../C++/spikeAndSlab.cpp")
-#B <- 1500
-#burn <- 500
-#ss.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, w=rep(.5,ncol(x)), B=B+burn, burn=burn, printProg=T)
-#ss.b <- ss.mod$beta
-#ss.g <- ss.mod$gam
-#(post.gam <- round(apply(ss.g,2,mean),5))
-#(post.beta <- round(apply(ss.b, 2, mean),5))
-#order(post.beta,decreasing=T)
-#par(mfrow=c(3,1)); plot(ss.b[,1]); plot(ss.b[,3]); plot(ss.b[,10]); par(mfrow=c(1,1))
+sourceCpp("../C++/spikeAndSlab.cpp")
+B <- 1500
+burn <- 500
+ss.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, w=rep(.5,ncol(x)), B=B+burn, burn=burn, printProg=T)
+ss.b <- ss.mod$beta
+ss.g <- ss.mod$gam
+(post.gam <- round(apply(ss.g,2,mean),5))
+(post.beta <- round(apply(ss.b, 2, mean),5))
+order(post.beta,decreasing=T)
+par(mfrow=c(3,1)); plot(ss.b[,1]); plot(ss.b[,3]); plot(ss.b[,10]); par(mfrow=c(1,1))
