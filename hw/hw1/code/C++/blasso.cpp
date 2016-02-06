@@ -2,21 +2,8 @@
 #include <func.h> // wsample, ldnorm, mvrnorm
 
 
-double lg(vec y, mat x, double l, vec b, vec cand) {
-  vec m;
-  double lg_cand, lg_curr;
-  
-  m = y-x*cand;
-  lg_cand = (-.5 * m.t() * m -.5 * l * sum(abs(cand)))[0];
-  m = y-x*b;
-  lg_curr = (-.5 * m.t() * m -.5 * l * sum(abs(b)))[0];
-
-  return lg_cand-lg_curr;
-
-}
-
 //[[Rcpp::export]]
-List blasso(vec y, mat x, double r, double delta, int B, int burn, bool printProg) {
+List blasso(vec y, mat x, double r, double delta, vec t2_a, vec t2_b, int B, int burn, bool printProg) {
   int n = y.size();
   int J = x.n_cols;
   mat beta = ones<mat>(B,J);
@@ -25,20 +12,24 @@ List blasso(vec y, mat x, double r, double delta, int B, int burn, bool printPro
   mat xx = x.t() * x;
   mat xy = x.t() * y;
   mat outvec = zeros<mat>(B-burn,1);
-  vec cand;
+  mat S = zeros<mat>(J,J);
+  mat D = zeros<mat>(J,J);
+  vec m = zeros<vec>(J);
+  double sh, sc;
   List ret;
 
 
   for (int b=1; b<B; b++) {
 
     // Update beta
-    cand = vectorise(mvrnorm(beta.row(b-1),eye(J,J)));
-    if ( lg(y,x,lam[b-1],beta.row(b-1),cand) > log(randu()) ) {
-      beta_acc++;
-      beta.row(b) = reshape(cand, 1, J);
-    } else {
-      beta.row(b) = beta.row(b-1);
-    }
+    S = (xx + D.i()).i();
+
+
+    
+    // Update lambda
+    //sh = J+r;
+    //sc = sum(t2)/2 + delta;
+    //lam[b] = rgamma(1,sh,1/sc); // shape and rate
     
 
     if (printProg) Rcout << "\rProgress: " << b << "/" << B;
