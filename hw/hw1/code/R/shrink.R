@@ -9,7 +9,7 @@ library(Rcpp)
 Sys.setenv("PKG_CXXFLAGS"="-std=c++11") # enable c++11, for RcppArmadillo
 sourceCpp("../C++/spikeAndSlab.cpp")
 sourceCpp("../C++/blasso.cpp")
-
+sourceCpp("../C++/gdp.cpp")
 
 mvrnorm <- function(M,S,n=nrow(S)) M + t(chol(S)) %*% rnorm(n)
 
@@ -43,9 +43,6 @@ mod <- as.list(1:numdat)
 # - Compute mean(L_j: beta_j == 0)
 # - posterior pred.
 
-# Temp
-#Sig <- Sig_Makers[[1]](100);
-#beta <- betas[[1]](100)
 
 oneSim <- function(n_i,p_i,S_i,beta_i) {
   param_index <- list("n"=n_i,"p"=p_i,"S"=S_i,"beta"=beta_i)
@@ -54,9 +51,9 @@ oneSim <- function(n_i,p_i,S_i,beta_i) {
   y <- x %*% betas[[beta_i]](p[[p_i]]) + rnorm(n[[n_i]])
   lasso.mod <- cv.glmnet(x[,-1],y)
   ridge.mod <- lm.ridge(y~x[,-1])
-  spike.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, w=rep(.5,ncol(x)), B=2000, burn=500, printProg=F)
-  blasso.mod <- blasso(y=y,x=x,r=1,delta=1.5,B=1200,burn=200, printProg=F)
-  gdp.mod <- "not complete"
+  spike.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, w=rep(.5,ncol(x)), B=2000, burn=500, printProg=F, returnHyper=F)
+  blasso.mod <- blasso(y=y,x=x,r=1,delta=1.5,B=1200,burn=200, printProg=F, returnHyper=F)
+  gdp.mod <- gdp(y=y, x=x, B=2000, burn=500, printProg=F,returnHyper=F)
   mod <- list("lasso_mod"=lasso.mod, "ridge_mod"=ridge.mod, "spike_mod"=spike.mod, "blasso_mod"=blasso.mod, "gdp_mod"=gdp.mod, "param_index"=param_index)
   mod
 }
@@ -69,9 +66,20 @@ for (n_i in 1:length(n)) for (p_i in 1:length(p)) for (S_i in 1:length(Sig_Maker
 
 mod <- foreach(mpi=mod.params.ind) %dopar% oneSim(mpi$n,mpi$p,mpi$S,mpi$beta)
 
+## GDP WORKS!!!
+#Sig <- Sig_Makers[[1]](100);
+#beta <- betas[[1]](100)
+#x <- t(sapply( 1:(n[[2]]), function(x) c(1, mvrnorm(0,Sig)) ))
+#y <- x %*% beta + rnorm(n[[2]])
+#sourceCpp("../C++/gdp.cpp")
+#gdp.mod <- gdp(y=y, x=x, B=2000, burn=500, printProg=T,returnHyper=F)
+#gdp.b <- gdp.mod$beta
+#plot( apply(gdp.b,2,mean) )
+
+
 # Bayesian Lasso WORKING!
 #sourceCpp("../C++/blasso.cpp")
-#blasso.mod <- blasso(y=y,x=x,r=1,delta=1.5,B=1200,burn=200, printProg=T)
+#blasso.mod <- blasso(y=y,x=x,r=1,delta=1.5,B=1200,burn=200, printProg=T,returnHyper=T)
 #bl.b <- blasso.mod$beta
 #plot(apply(bl.b,2,mean))
 #plot(apply(blasso.mod$t2,2,mean))
@@ -82,7 +90,7 @@ mod <- foreach(mpi=mod.params.ind) %dopar% oneSim(mpi$n,mpi$p,mpi$S,mpi$beta)
 #sourceCpp("../C++/spikeAndSlab.cpp")
 #B <- 1500
 #burn <- 500
-#ss.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, w=rep(.5,ncol(x)), B=B+burn, burn=burn, printProg=T)
+#ss.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, w=rep(.5,ncol(x)), B=B+burn, burn=burn, printProg=T, returnHyper=T)
 #ss.b <- ss.mod$beta
 #ss.g <- ss.mod$gam
 #(post.gam <- round(apply(ss.g,2,mean),5))

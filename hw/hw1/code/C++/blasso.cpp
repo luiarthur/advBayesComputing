@@ -3,7 +3,7 @@
 
 
 //[[Rcpp::export]]
-List blasso(vec y, mat x, double r, double delta, int B, int burn, bool printProg) {
+List blasso(vec y, mat x, double r, double delta, int B, int burn, bool printProg, bool returnHyper) {
   int n = y.size();
   int J = x.n_cols;
   mat beta = ones<mat>(B,J);

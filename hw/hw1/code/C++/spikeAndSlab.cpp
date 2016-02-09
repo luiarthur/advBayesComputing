@@ -4,7 +4,7 @@
 //Working!
 
 //[[Rcpp::export]]
-List spikeAndSlab(vec y, mat x, vec tau2, double g, vec w, int B, int burn, bool printProg) {
+List spikeAndSlab(vec y, mat x, vec tau2, double g, vec w, int B, int burn, bool printProg, bool returnHyper) {
   int n = y.size();
   int J = x.n_cols;
   mat beta = ones<mat>(B,J);
