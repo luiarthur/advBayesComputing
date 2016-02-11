@@ -106,8 +106,8 @@ compareBayesian <- function(model,rmse_ord="blasso",ylim_rmse=c(0,5),cex_rmse=1)
 
   simdat <- t(sapply(ord, function(o) mod[[o]]$param_index))
   simdat <- cbind(
-    ifelse(simdat[,1] == 1, "n50", "n100"),
-    ifelse(simdat[,2] == 1, "p100", "p1000"),
+    ifelse(simdat[,1] == 1, "n50", "n500"),
+    ifelse(simdat[,2] == 1, "p100", "p5000"),
     ifelse(simdat[,3] == 1, "I", ifelse(simdat[,3] == 2, "S.1", "S.6")),
     ifelse(simdat[,4] == 1, "b1", ifelse(simdat[,4] == 2, "b2", "b3")))
   lab <- apply(simdat,1,function(x) paste(x,collapse="\n"))
