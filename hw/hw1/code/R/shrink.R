@@ -99,10 +99,10 @@ compareBayesian <- function(model,rmse_ord="blasso",ylim_rmse=c(0,5),cex_rmse=1)
   }
 
   par(mar=c(4,4,0,0))
-  plot(rmse_blasso[ord],col="grey",pch=1,ylim=ylim_rmse,cex=cex_rmse,
+  plot(rmse_blasso[ord],col="black",pch=1,ylim=ylim_rmse,cex=cex_rmse,
        ylab="RMSE",xlab="",lwd=2,xaxt="n",bty="n")
-  points(rmse_spike[ord],col="grey",pch=2,cex=cex_rmse,lwd=2)
-  points(rmse_gdp[ord],col="grey",pch=4,cex=cex_rmse,lwd=2)
+  points(rmse_spike[ord],col="black",pch=2,cex=cex_rmse,lwd=2)
+  points(rmse_gdp[ord],col="black",pch=4,cex=cex_rmse,lwd=2)
 
   simdat <- t(sapply(ord, function(o) mod[[o]]$param_index))
   simdat <- cbind(
