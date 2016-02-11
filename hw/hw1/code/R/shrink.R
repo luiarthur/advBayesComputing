@@ -23,10 +23,10 @@ Sig_Maker <- function(rho,p) {
   M
 }
 
-#n <- c(50, 500)
-#p <- c(100, 1000)
-n <- c(50, 100)
-p <- c(100,200)
+n <- c(50, 500)
+p <- c(100, 1000)
+#n <- c(50, 100)
+#p <- c(100,200)
 Sig_Makers <- list( function(p) diag(p), function(p) Sig_Maker(.1,p), function(p) Sig_Maker(.6,p) )
 betas <- list( function(p) {b <- rep(0,p); b[1:5] <- 3; b <- c(0,b); b }, 
                function(p) {b <- rep(0,p); b[1:5] <- 5; b[6:10] <- -2; b[11:15] <- .5; b <- c(0,b); b },
@@ -117,13 +117,19 @@ compareBayesian <- function(model,rmse_ord="blasso",ylim_rmse=c(0,5),cex_rmse=1)
   list("ord"=ord, "blasso"=rmse_blasso, "gdp"=rmse_gdp, "spike"=rmse_spike)
 }
 
-rmse_blasso <- compareBayesian(mod,"blasso",ylim=c(0,8),cex=1.5)
+pdf("output/rmseblasso.pdf",w=16,h=9)
+  rmse_blasso <- compareBayesian(mod,"blasso",ylim=c(0,8),cex=1.5)
+dev.off()
+pdf("output/rmsespike.pdf",w=16,h=9)
 rmse_spike  <- compareBayesian(mod,"spike",ylim=c(0,8),cex=1.5)
+dev.off()
+pdf("output/rmsegdp.pdf",w=16,h=9)
 rmse_gdp    <- compareBayesian(mod,"gdp",ylim=c(0,8),cex=1.5)
+dev.off()
 
 sapply(rmse_gdp,mean) # blasso seems to perform a little better than gdp and a lot better than spike and slab
-#      ord    blasso       gdp     spike 
-#18.500000  1.114592  1.124779  3.695219    
+#      ord    blasso       gdp     spike
+#18.500000  1.114592  1.124779  3.695219
 
 # - discuss accuracy wrt to a metric
 # - Compare Lasso and S&S for variable selection
