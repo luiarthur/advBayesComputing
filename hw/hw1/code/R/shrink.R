@@ -99,10 +99,10 @@ compareBayesian <- function(model,rmse_ord="blasso",ylim_rmse=c(0,5),cex_rmse=1)
   }
 
   par(mar=c(4,4,0,0))
-  plot(rmse_blasso[ord],col="blue",ylim=ylim_rmse,cex=cex_rmse,
+  plot(rmse_blasso[ord],col="blue",pch=1,ylim=ylim_rmse,cex=cex_rmse,
        ylab="RMSE",xlab="",lwd=2,xaxt="n",bty="n")
-  points(rmse_spike[ord],col="red",cex=cex_rmse,lwd=2)
-  points(rmse_gdp[ord],col="green",cex=cex_rmse,lwd=2)
+  points(rmse_spike[ord],col="red",pch=2,cex=cex_rmse,lwd=2)
+  points(rmse_gdp[ord],col="green",pch=4,cex=cex_rmse,lwd=2)
 
   simdat <- t(sapply(ord, function(o) mod[[o]]$param_index))
   simdat <- cbind(
@@ -119,13 +119,13 @@ compareBayesian <- function(model,rmse_ord="blasso",ylim_rmse=c(0,5),cex_rmse=1)
 }
 
 pdf("output/rmseblasso.pdf",w=16,h=9)
-  rmse_blasso <- compareBayesian(mod,"blasso",ylim=c(0,8),cex=1.5)
+  rmse_blasso <- compareBayesian(mod,"blasso",ylim=c(0,10),cex=1.5)
 dev.off()
 pdf("output/rmsessvn.pdf",w=16,h=9)
-rmse_spike  <- compareBayesian(mod,"spike",ylim=c(0,8),cex=1.5)
+rmse_spike  <- compareBayesian(mod,"spike",ylim=c(0,10),cex=1.5)
 dev.off()
 pdf("output/rmsegdp.pdf",w=16,h=9)
-rmse_gdp    <- compareBayesian(mod,"gdp",ylim=c(0,8),cex=1.5)
+rmse_gdp    <- compareBayesian(mod,"gdp",ylim=c(0,10),cex=1.5)
 dev.off()
 
 sapply(rmse_gdp,mean) # blasso seems to perform a little better than gdp and a lot better than spike and slab
