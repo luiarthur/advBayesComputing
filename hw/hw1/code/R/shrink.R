@@ -118,13 +118,13 @@ compareBayesian <- function(model,rmse_ord="blasso",ylim_rmse=c(0,5),cex_rmse=1)
   list("ord"=ord, "blasso"=rmse_blasso, "gdp"=rmse_gdp, "spike"=rmse_spike)
 }
 
-pdf("output/rmseblasso.png",w=16,h=9)
+pdf("output/rmseblasso.pdf",w=16,h=9)
   rmse_blasso <- compareBayesian(mod,"blasso",ylim=c(0,10),cex=1.5)
 dev.off()
-pdf("output/rmsessvn.png",w=16,h=9)
+pdf("output/rmsessvn.pdf",w=16,h=9)
 rmse_spike  <- compareBayesian(mod,"spike",ylim=c(0,10),cex=1.5)
 dev.off()
-pdf("output/rmsegdp.png",w=16,h=9)
+pdf("output/rmsegdp.pdf",w=16,h=9)
 rmse_gdp    <- compareBayesian(mod,"gdp",ylim=c(0,10),cex=1.5)
 dev.off()
 
