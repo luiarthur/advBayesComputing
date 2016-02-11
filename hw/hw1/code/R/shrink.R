@@ -10,6 +10,7 @@ Sys.setenv("PKG_CXXFLAGS"="-std=c++11") # enable c++11, for RcppArmadillo
 sourceCpp("../C++/spikeAndSlab.cpp")
 sourceCpp("../C++/blasso.cpp")
 sourceCpp("../C++/gdp.cpp")
+system("mkdir -p output")
 
 mvrnorm <- function(M,S,n=nrow(S)) M + t(chol(S)) %*% rnorm(n)
 
