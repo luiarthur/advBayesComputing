@@ -46,7 +46,10 @@ List spikeAndSlab(vec y, mat x, vec tau2, double g, vec w, int B, int burn, bool
   }
 
   ret["beta"] = beta.tail_rows(B-burn);
-  ret["gam"] = gam.tail_rows(B-burn);
+
+  if (returnHyper) {
+    ret["gam"] = gam.tail_rows(B-burn);
+  }
 
   return ret;
 }

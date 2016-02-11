@@ -36,25 +36,23 @@ numdat <- length(n) * length(p) * length(Sig_Makers) * length(betas)
 counter <- 0
 mod <- as.list(1:numdat)
 
-
-# - For all theses Bayesian models, get E(\beta_j | y)
-# - discuss accuracy wrt to a metric
-# - Compare Lasso and S&S for variable selection
-# - Compute mean(L_j: beta_j == 0)
-# - posterior pred.
-
+beta_lookup <- function(param_index) { 
+  bb <- param_index$beta
+  pp <- param_index$p
+  betas[[bb]](p[pp]) 
+}
 
 oneSim <- function(n_i,p_i,S_i,beta_i) {
   param_index <- list("n"=n_i,"p"=p_i,"S"=S_i,"beta"=beta_i)
   print( paste0( c("n: ","p: ","S: ","beta: "), unlist(param_index) ))
-  x <- t(sapply( 1:(n[[n_i]]), function(x) c(1, mvrnorm(0,Sig_Makers[[S_i]](p[[p_i]]))) ))
-  y <- x %*% betas[[beta_i]](p[[p_i]]) + rnorm(n[[n_i]])
+  x <- t(sapply( 1:(n[n_i]), function(x) c(1, mvrnorm(0,Sig_Makers[[S_i]](p[p_i]))) ))
+  y <- x %*% betas[[beta_i]](p[p_i]) + rnorm(n[n_i])
   lasso.mod <- cv.glmnet(x[,-1],y)
   ridge.mod <- lm.ridge(y~x[,-1])
   spike.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, w=rep(.5,ncol(x)), B=2000, burn=500, printProg=F, returnHyper=F)
   blasso.mod <- blasso(y=y,x=x,r=1,delta=1.5,B=1200,burn=200, printProg=F, returnHyper=F)
   gdp.mod <- gdp(y=y, x=x, B=2000, burn=500, printProg=F,returnHyper=F)
-  mod <- list("lasso_mod"=lasso.mod, "ridge_mod"=ridge.mod, "spike_mod"=spike.mod, "blasso_mod"=blasso.mod, "gdp_mod"=gdp.mod, "param_index"=param_index)
+  mod <- list("lasso_mod"=lasso.mod, "ridge_mod"=ridge.mod, "spike_mod"=spike.mod$beta, "blasso_mod"=blasso.mod$beta, "gdp_mod"=gdp.mod$beta, "param_index"=param_index)
   mod
 }
 
@@ -66,34 +64,70 @@ for (n_i in 1:length(n)) for (p_i in 1:length(p)) for (S_i in 1:length(Sig_Maker
 
 mod <- foreach(mpi=mod.params.ind) %dopar% oneSim(mpi$n,mpi$p,mpi$S,mpi$beta)
 
-## GDP WORKS!!!
-#Sig <- Sig_Makers[[1]](100);
-#beta <- betas[[1]](100)
-#x <- t(sapply( 1:(n[[2]]), function(x) c(1, mvrnorm(0,Sig)) ))
-#y <- x %*% beta + rnorm(n[[2]])
-#sourceCpp("../C++/gdp.cpp")
-#gdp.mod <- gdp(y=y, x=x, B=2000, burn=500, printProg=T,returnHyper=F)
-#gdp.b <- gdp.mod$beta
-#plot( apply(gdp.b,2,mean) )
+mod_n <- 35 
+plot( beta_lookup(mod[[mod_n]]$param_index), col="grey", pch=1, ylim=c(-5,5), bty="n", cex =2, xlab="Parameter Index", ylab=expression(beta));
+points( apply(mod[[mod_n]]$spike,2,mean),col='red',pch=20 );
+points( apply(mod[[mod_n]]$gdp,2,mean),col='green',pch=20 );
+points( apply(mod[[mod_n]]$blasso,2,mean),col='blue',pch=20 );
+
+points( coef(mod[[mod_n]]$lasso),col='blue',pch=20 );
+points( coef(mod[[mod_n]]$ridge),col='red',pch=20 );
 
 
-# Bayesian Lasso WORKING!
-#sourceCpp("../C++/blasso.cpp")
-#blasso.mod <- blasso(y=y,x=x,r=1,delta=1.5,B=1200,burn=200, printProg=T,returnHyper=T)
-#bl.b <- blasso.mod$beta
-#plot(apply(bl.b,2,mean))
-#plot(apply(blasso.mod$t2,2,mean))
-#plot(blasso.mod$lam)
-#hist(blasso.mod$lam)
+# - For all theses Bayesian models, get E(\beta_j | y)
+rmse <- function(b,b_true) sqrt(mean((b-b_true)^2))
+compareBayesian <- function(model,rmse_ord="blasso",ylim_rmse=c(0,5),cex_rmse=1) {
+  cc <- 0
+  rmse_blasso <- NULL; rmse_spike <- NULL; rmse_gdp <- NULL;
+  for (mm in model) {
+    cc <- cc + 1
+    mod_ind <- mm$param_index
+    beta_true <- beta_lookup(mod_ind)
+    rmse_blasso[cc] <- rmse(mm$blasso,beta_true)
+    rmse_spike[cc] <- rmse(mm$spike,beta_true)
+    rmse_gdp[cc] <- rmse(mm$gdp,beta_true)
+  }
 
-# Spike and Slab WORKING!
-#sourceCpp("../C++/spikeAndSlab.cpp")
-#B <- 1500
-#burn <- 500
-#ss.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, w=rep(.5,ncol(x)), B=B+burn, burn=burn, printProg=T, returnHyper=T)
-#ss.b <- ss.mod$beta
-#ss.g <- ss.mod$gam
-#(post.gam <- round(apply(ss.g,2,mean),5))
-#(post.beta <- round(apply(ss.b, 2, mean),5))
-#order(post.beta,decreasing=T)
-#par(mfrow=c(3,1)); plot(ss.b[,1]); plot(ss.b[,3]); plot(ss.b[,10]); par(mfrow=c(1,1))
+  ord <- 1:length(mod)
+  if (rmse_ord == "blasso") {
+    ord <- order(rmse_blasso)
+  } else if (rmse_ord == "gdp") {
+    ord <- order(rmse_gdp)
+  } else if (rmse_ord == "spike") {
+    ord <- order(rmse_spike)
+  }
+
+  par(mar=c(4,4,0,0))
+  plot(rmse_blasso[ord],col="blue",ylim=ylim_rmse,cex=cex_rmse,
+       ylab="RMSE",xlab="",lwd=2,xaxt="n",bty="n")
+  points(rmse_spike[ord],col="red",cex=cex_rmse,lwd=2)
+  points(rmse_gdp[ord],col="green",cex=cex_rmse,lwd=2)
+
+  simdat <- t(sapply(ord, function(o) mod[[o]]$param_index))
+  simdat <- cbind(
+    ifelse(simdat[,1] == 1, "n50", "n100"),
+    ifelse(simdat[,2] == 1, "p100", "p1000"),
+    ifelse(simdat[,3] == 1, "I", ifelse(simdat[,3] == 2, "S.1", "S.6")),
+    ifelse(simdat[,4] == 1, "b1", ifelse(simdat[,4] == 2, "b2", "b3")))
+  lab <- apply(simdat,1,function(x) paste(x,collapse="\n"))
+  axis(1,at=1:36,label=lab,pos=-.4,tck=0,lty=0,cex.axis=.6)
+  par(mar=c(5.1,4.1,4.1,2.1))
+  abline(v=5*(1:7),col=rgb(.5,.5,.5))
+
+  list("ord"=ord, "blasso"=rmse_blasso, "gdp"=rmse_gdp, "spike"=rmse_spike)
+}
+
+rmse_blasso <- compareBayesian(mod,"blasso",ylim=c(0,8),cex=1.5)
+rmse_spike  <- compareBayesian(mod,"spike",ylim=c(0,8),cex=1.5)
+rmse_gdp    <- compareBayesian(mod,"gdp",ylim=c(0,8),cex=1.5)
+
+sapply(rmse_gdp,mean) # blasso seems to perform a little better than gdp and a lot better than spike and slab
+#      ord    blasso       gdp     spike 
+#18.500000  1.114592  1.124779  3.695219    
+
+# - discuss accuracy wrt to a metric
+# - Compare Lasso and S&S for variable selection
+# - Compute mean(L_j: beta_j == 0)
+# - posterior pred.
+
+

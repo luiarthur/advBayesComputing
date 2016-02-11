@@ -45,10 +45,12 @@ List blasso(vec y, mat x, double r, double delta, int B, int burn, bool printPro
     if (printProg) Rcout << "\rProgress: " << b << "/" << B;
   }
 
-  outvec = reshape(lam,B,1);
   ret["beta"] = beta.tail_rows(B-burn);
-  ret["lambda"] = outvec.tail_rows(B-burn);
-  ret["t2"] = t2.tail_rows(B-burn);
+  if (returnHyper) {
+    outvec = reshape(lam,B,1);
+    ret["lambda"] = outvec.tail_rows(B-burn);
+    ret["t2"] = t2.tail_rows(B-burn);
+  }
 
   return ret;
 }
