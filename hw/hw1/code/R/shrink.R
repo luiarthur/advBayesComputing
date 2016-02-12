@@ -54,7 +54,7 @@ oneSim <- function(n_i,p_i,S_i,beta_i) {
   spike.mod <- spikeAndSlab(y=y, x=x, tau2=rep(tt,ncol(x)), g=100/tt, w=rep(.5,ncol(x)), B=3000, burn=2000, printProg=F, returnHyper=T)
   blasso.mod <- blasso(y=y,x=x,r=1,delta=1.5,B=1200,burn=200, printProg=F, returnHyper=F)
   gdp.mod <- gdp(y=y, x=x, B=2000, burn=500, printProg=F,returnHyper=F)
-  mod <- list("lasso_mod"=lasso.mod, "ridge_mod"=ridge.mod, "spike_mod"=spike.mod$beta, "blasso_mod"=blasso.mod$beta, "gdp_mod"=gdp.mod$beta, "param_index"=param_index)
+  mod <- list("lasso_mod"=lasso.mod, "ridge_mod"=ridge.mod, "spike_mod"=spike.mod, "blasso_mod"=blasso.mod$beta, "gdp_mod"=gdp.mod$beta, "param_index"=param_index)
   mod
 }
 
@@ -85,9 +85,9 @@ compareBayesian <- function(model,rmse_ord="blasso",ylim_rmse=c(0,5),cex_rmse=1)
     cc <- cc + 1
     mod_ind <- mm$param_index
     beta_true <- beta_lookup(mod_ind)
-    rmse_blasso[cc] <- rmse(mm$blasso,beta_true)
-    rmse_spike[cc] <- rmse(mm$spike,beta_true)
-    rmse_gdp[cc] <- rmse(mm$gdp,beta_true)
+    rmse_blasso[cc] <- rmse(apply(mm$blasso,2,mean),beta_true)
+    rmse_spike[cc] <- rmse(apply(mm$spike$beta,2,mean),beta_true)
+    rmse_gdp[cc] <- rmse(apply(mm$gdp,2,mean),beta_true)
   }
 
   ord <- 1:length(model)
@@ -112,7 +112,7 @@ compareBayesian <- function(model,rmse_ord="blasso",ylim_rmse=c(0,5),cex_rmse=1)
     ifelse(simdat[,3] == 1, "I", ifelse(simdat[,3] == 2, "S.1", "S.6")),
     ifelse(simdat[,4] == 1, "b1", ifelse(simdat[,4] == 2, "b2", "b3")))
   lab <- apply(simdat,1,function(x) paste(x,collapse="\n"))
-  axis(1,at=1:36,label=lab,pos=-.4,tck=0,lty=0,cex.axis=.6)
+  axis(1,at=1:numdat,label=lab,pos=-.4,tck=0,lty=0,cex.axis=.6)
   legend("topleft",cex=2,legend=c("blasso","ssvn","gdp"),pch=c(1,2,4),bty="n")
   par(mar=c(5.1,4.1,4.1,2.1))
   abline(v=5*(1:7),col=rgb(.5,.5,.5))
