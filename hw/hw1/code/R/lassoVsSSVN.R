@@ -45,7 +45,8 @@ oneSim <- function(n_i,p_i,S_i,beta_i) {
   x <- t(sapply( 1:(n[n_i]), function(x) c(1, mvrnorm(0,Sig_Makers[[S_i]](p[p_i]))) ))
   y <- x %*% betas[[beta_i]](p[p_i]) + rnorm(n[n_i])
   lasso.mod <- cv.glmnet(x[,-1],y)
-  ssvn.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, w=rep(.5,ncol(x)), B=2000, burn=500, printProg=F, returnHyper=T)
+  tt <- .05^2
+  spike.mod <- spikeAndSlab(y=y, x=x, tau2=rep(tt,ncol(x)), g=100/tt, w=rep(.5,ncol(x)), B=3000, burn=2000, printProg=F, returnHyper=T)
   mod <- list("lasso_mod"=lasso.mod, "ssvn_mod"=ssvn.mod, "param_index"=param_index)
   mod
 }
