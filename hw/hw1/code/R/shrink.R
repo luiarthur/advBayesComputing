@@ -50,7 +50,8 @@ oneSim <- function(n_i,p_i,S_i,beta_i) {
   y <- x %*% betas[[beta_i]](p[p_i]) + rnorm(n[n_i])
   lasso.mod <- cv.glmnet(x[,-1],y)
   ridge.mod <- lm.ridge(y~x[,-1])
-  spike.mod <- spikeAndSlab(y=y, x=x, tau2=rep(1e-6,ncol(x)), g=1e8, w=rep(.5,ncol(x)), B=2000, burn=500, printProg=F, returnHyper=F)
+  tt <- .05^2
+  spike.mod <- spikeAndSlab(y=y, x=x, tau2=rep(tt,ncol(x)), g=100/tt, w=rep(.5,ncol(x)), B=2000, burn=500, printProg=F, returnHyper=F)
   blasso.mod <- blasso(y=y,x=x,r=1,delta=1.5,B=1200,burn=200, printProg=F, returnHyper=F)
   gdp.mod <- gdp(y=y, x=x, B=2000, burn=500, printProg=F,returnHyper=F)
   mod <- list("lasso_mod"=lasso.mod, "ridge_mod"=ridge.mod, "spike_mod"=spike.mod$beta, "blasso_mod"=blasso.mod$beta, "gdp_mod"=gdp.mod$beta, "param_index"=param_index)
@@ -118,6 +119,7 @@ compareBayesian <- function(model,rmse_ord="blasso",ylim_rmse=c(0,5),cex_rmse=1)
   list("ord"=ord, "blasso"=rmse_blasso, "gdp"=rmse_gdp, "spike"=rmse_spike)
 }
 
+# - discuss accuracy wrt to a metric
 pdf("output/rmseblasso.pdf",w=16,h=9)
   rmse_blasso <- compareBayesian(mod,"blasso",ylim=c(0,10),cex=1.5)
 dev.off()
@@ -132,8 +134,7 @@ sapply(rmse_gdp,mean) # blasso seems to perform a little better than gdp and a l
 #      ord    blasso       gdp     spike
 #18.500000  1.114592  1.124779  3.695219
 
-# - discuss accuracy wrt to a metric
-# - Compare Lasso and S&S for variable selection
+
 # - Compute mean(L_j: beta_j == 0)
 # - posterior pred.
 

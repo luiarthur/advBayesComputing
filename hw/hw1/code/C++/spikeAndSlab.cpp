@@ -12,7 +12,8 @@ List spikeAndSlab(vec y, mat x, vec tau2, double g, vec w, int B, int burn, bool
   mat gam = zeros<mat>(B,J);
   mat xx = x.t() * x;
   mat xy = x.t() * y;
-  mat D2 = eye<mat>(J,J);
+  //mat D2 = eye<mat>(J,J);
+  mat D2i = eye<mat>(J,J);
   int dummy;
   List ret;
   vec m;
@@ -22,12 +23,13 @@ List spikeAndSlab(vec y, mat x, vec tau2, double g, vec w, int B, int burn, bool
   for (int b=1; b<B; b++) {
 
     // Update beta
-    S = (xx + D2.i()).i();
+    S = (xx + D2i).i();//(xx + D2.i()).i();
     m = S * xy;
     beta.row(b) = reshape(mvrnorm(m,S),1,J);
 
     // Update gamma
     for (int j=0; j<J; j++) {
+      //w[j] = rbeta(1,.5+gam(b-1,j),.5+1-gam(b-1,j))[0];
       lp1 = ldnorm(beta(b,j),0,g*tau2[j]) + log(w[j]);
       lp0 = ldnorm(beta(b,j),0,tau2[j]) + log(1-w[j]);
 
@@ -36,9 +38,11 @@ List spikeAndSlab(vec y, mat x, vec tau2, double g, vec w, int B, int burn, bool
 
       gam(b,j) = wsample( {0,1}, {p0,p1} );
       if ( gam(b,j) == 1 ) {
-        D2(j,j) = g * tau2[j];
+        D2i(j,j) = 1 / (g * tau2[j]);
+        //D2(j,j) = g * tau2[j];
       } else {
-        D2(j,j) = tau2[j];
+        D2i(j,j) = 1 / tau2[j];
+        //D2(j,j) = tau2[j];
       }
     }
 
