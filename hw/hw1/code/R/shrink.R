@@ -131,18 +131,18 @@ pdf("output/rmsegdp.pdf",w=16,h=9)
   rmse_gdp    <- compareBayesian(mod,"gdp",ylim=c(0,10),cex=1.5)
 dev.off()
 
-sapply(rmse_gdp,mean) # blasso seems to perform a little better than gdp and a lot better than spike and slab
+sapply(rmse_gdp[-1],mean) # blasso seems to perform a little better than gdp and a lot better than spike and slab
 #      ord    blasso       gdp     spike
-#18.500000  1.114592  1.124779  3.695219
+#18.500000     .3141     .3722     .5840
 
 # Compare Lasso and SSVN
-#mod_n <- 4
-#true_beta <- beta_lookup(mod[[mod_n]]$param_index)
-#postmean.gamma <- apply(mod[[mod_n]]$ssvn$gam,2,mean)
-#sel_lasso <- coef(mod[[mod_n]]$lasso) != 0
-#sel_ssvn <- postmean.gamma > .5
-#mean(as.numeric(sel_lasso) == (true_beta != 0))
-#mean(as.numeric(sel_ssvn) == (true_beta != 0))
+mod_n <-11 
+true_beta <- beta_lookup(mod[[mod_n]]$param_index)
+postmean.gamma <- apply(mod[[mod_n]]$spike$gam,2,mean)
+sel_lasso <- coef(mod[[mod_n]]$lasso) != 0
+sel_ssvn <- postmean.gamma > .5
+mean(as.numeric(sel_lasso) == (true_beta != 0))
+mean(as.numeric(sel_ssvn) == (true_beta != 0))
 
 # - Compute mean(L_j: beta_j == 0)
 # - posterior pred.
