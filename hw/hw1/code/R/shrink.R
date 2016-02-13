@@ -31,7 +31,7 @@ p <- c(100, 1000)
 Sig_Makers <- list( function(p) diag(p), function(p) Sig_Maker(.1,p), function(p) Sig_Maker(.6,p) )
 betas <- list( function(p) {b <- rep(0,p); b[1:5] <- 3; b <- c(0,b); b }, 
                function(p) {b <- rep(0,p); b[1:5] <- 5; b[6:10] <- -2; b[11:15] <- .5; b <- c(0,b); b },
-               function(p) {b <- rep(1,p); b <- c(1,b); b })
+               function(p) {b <- rep(1,p); b <- c(0,b); b })
 
 numdat <- length(n) * length(p) * length(Sig_Makers) * length(betas)
 counter <- 0
@@ -78,7 +78,7 @@ mod <- foreach(mpi=mod.params.ind) %dopar% oneSim(mpi$n,mpi$p,mpi$S,mpi$beta)
 
 # - For all theses Bayesian models, get E(\beta_j | y)
 rmse <- function(b,b_true) sqrt(mean((b-b_true)^2))
-compareBayesian <- function(model,rmse_ord="blasso",ylim_rmse=c(0,5),cex_rmse=1) {
+compareBayesian <- function(model,rmse_ord="blasso",ylim_rmse=c(0,5),cex_rmse=1,pos_rmse=0,cex.axis_rmse=.6) {
   cc <- 0
   rmse_blasso <- NULL; rmse_spike <- NULL; rmse_gdp <- NULL;
   for (mm in model) {
@@ -112,7 +112,7 @@ compareBayesian <- function(model,rmse_ord="blasso",ylim_rmse=c(0,5),cex_rmse=1)
     ifelse(simdat[,3] == 1, "I", ifelse(simdat[,3] == 2, "S.1", "S.6")),
     ifelse(simdat[,4] == 1, "b1", ifelse(simdat[,4] == 2, "b2", "b3")))
   lab <- apply(simdat,1,function(x) paste(x,collapse="\n"))
-  axis(1,at=1:numdat,label=lab,pos=-.4,tck=0,lty=0,cex.axis=.6)
+  axis(1,at=1:numdat,label=lab,pos=pos_rmse,tck=0,lty=0,cex.axis=cex.axis_rmse)
   legend("topleft",cex=2,legend=c("blasso","ssvn","gdp"),pch=c(1,2,4),bty="n")
   par(mar=c(5.1,4.1,4.1,2.1))
   abline(v=5*(1:7),col=rgb(.5,.5,.5))
@@ -122,13 +122,13 @@ compareBayesian <- function(model,rmse_ord="blasso",ylim_rmse=c(0,5),cex_rmse=1)
 
 # - discuss accuracy wrt to a metric
 pdf("output/rmseblasso.pdf",w=16,h=9)
-  rmse_blasso <- compareBayesian(mod,"blasso",ylim=c(0,10),cex=1.5)
+  rmse_blasso <- compareBayesian(mod,"blasso",ylim=c(0,3),pos_rmse=-.2,cex_rmse=1.5)
 dev.off()
 pdf("output/rmsessvn.pdf",w=16,h=9)
-  rmse_spike  <- compareBayesian(mod,"spike",ylim=c(0,10),cex=1.5)
+  rmse_spike  <- compareBayesian(mod,"spike",ylim=c(0,3),pos_r=-.2,cex_rmse=1.5)
 dev.off()
 pdf("output/rmsegdp.pdf",w=16,h=9)
-  rmse_gdp    <- compareBayesian(mod,"gdp",ylim=c(0,10),cex=1.5)
+  rmse_gdp    <- compareBayesian(mod,"gdp",ylim=c(0,3),pos_r=-.2,cex_rmse=1.5)
 dev.off()
 
 sapply(rmse_gdp[-1],mean) # blasso seems to perform a little better than gdp and a lot better than spike and slab
@@ -136,15 +136,28 @@ sapply(rmse_gdp[-1],mean) # blasso seems to perform a little better than gdp and
 #18.500000     .3141     .3722     .5840
 
 # Compare Lasso and SSVN
-mod_n <-11 
-true_beta <- beta_lookup(mod[[mod_n]]$param_index)
-postmean.gamma <- apply(mod[[mod_n]]$spike$gam,2,mean)
-sel_lasso <- coef(mod[[mod_n]]$lasso) != 0
-sel_ssvn <- postmean.gamma > .5
-mean(as.numeric(sel_lasso) == (true_beta != 0))
-mean(as.numeric(sel_ssvn) == (true_beta != 0))
+
+cms <- matrix(0,numdat,4)
+colnames(cms) <- c("++lasso","++ssvn","--lasso","--ssvn")
+for (mod_n in 1:numdat) {
+  true_beta <- beta_lookup(mod[[mod_n]]$param_index)
+  postmean.gamma <- apply(mod[[mod_n]]$spike$gam,2,mean)
+  sel_lasso <- !!as.numeric(coef(mod[[mod_n]]$lasso) != 0)
+  sel_ssvn <- postmean.gamma > .5
+  cms[mod_n,1] <- sum(true_beta !=0 & sel_lasso) / sum(true_beta != 0)
+  cms[mod_n,2] <- sum(true_beta !=0 & sel_ssvn) / sum(true_beta !=0)
+  cms[mod_n,3] <- sum(true_beta == 0 & !sel_lasso) / sum(true_beta == 0)
+  cms[mod_n,4] <- sum(true_beta == 0 & !sel_ssvn) / sum(true_beta == 0)
+  print(mod_n)
+}
+ord <- order(cms[,1])
+plot(cms[ord,1],type='l')
+lines(cms[ord,2])
+lines(cms[ord,3])
+lines(cms[ord,4])
+apply(cms,2,mean)
+
 
 # - Compute mean(L_j: beta_j == 0)
 # - posterior pred.
-
 
