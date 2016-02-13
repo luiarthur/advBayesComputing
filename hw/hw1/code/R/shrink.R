@@ -150,13 +150,35 @@ for (mod_n in 1:numdat) {
   cms[mod_n,4] <- sum(true_beta == 0 & !sel_ssvn) / sum(true_beta == 0)
   print(mod_n)
 }
-ord <- order(cms[,1])
-plot(cms[ord,1],type='l')
-lines(cms[ord,2])
-lines(cms[ord,3])
-lines(cms[ord,4])
-apply(cms,2,mean)
 
+compareVS <- function(c1=1,c2=2,ord=1,pos_rmse=0,cex.axis_rmse=1) {
+  ordd <- order(cms[,ord])
+  simdat <- t(sapply(ordd, function(o) mod[[o]]$param_index))
+  simdat <- cbind(
+    ifelse(simdat[,1] == 1, "n50", "n500"),
+    ifelse(simdat[,2] == 1, "p100", "p1000"),
+    ifelse(simdat[,3] == 1, "I", ifelse(simdat[,3] == 2, "S.1", "S.6")),
+    ifelse(simdat[,4] == 1, "b1", ifelse(simdat[,4] == 2, "b2", "b3")))
+
+  par(mar=c(4,4,0,0))
+  plot(cms[ordd,c1],ylim=0:1,pch=20,lwd=2,xlab="",xaxt="n",ylab="proportion")
+  points(cms[ordd,c2],pch=2,lwd=2)
+  lab <- apply(simdat,1,function(x) paste(x,collapse="\n"))
+  axis(1,at=1:numdat,label=lab,pos=pos_rmse,tck=0,lty=0,cex.axis=cex.axis_rmse)
+  legend("right",cex=2,legend=c(colnames(cms)[c1],colnames(cms)[c2]),pch=c(20,2),bty="n")
+  par(mar=c(5.1,4.1,4.1,2.1))
+  abline(v=5*(1:7),col=rgb(.5,.5,.5))
+}
+
+compareVS(1,2,1,-.05,.6)
+pdf("output/lassoVssvnPP.pdf",w=16,h=9); compareVS(1,2,1,-.05,.6); dev.off() 
+pdf("output/ssvnVlassoPP.pdf",w=16,h=9); compareVS(1,2,2,-.05,.6); dev.off()
+pdf("output/lassoVssvnFF.pdf",w=16,h=9); compareVS(3,4,3,-.05,.6); dev.off()
+pdf("output/ssvnVlassoFF.pdf",w=16,h=9); compareVS(3,4,4,-.05,.6); dev.off()
+
+apply(cms,2,mean)
+#  ++lasso    ++ssvn   --lasso    --ssvn
+#0.7317593 0.7477500 0.6325260 0.7224995  
 
 # - Compute mean(L_j: beta_j == 0)
 # - posterior pred.
