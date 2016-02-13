@@ -181,5 +181,83 @@ apply(cms,2,mean)
 #0.7317593 0.7477500 0.6325260 0.7224995  
 
 # - Compute mean(L_j: beta_j == 0)
+m_zero <- function(b_post,b_true,zero=T) {
+  ind_zero <- which(b_true == 0)
+  out <- NULL
+  if (zero) 
+    out <- mean(apply(as.matrix(b_post[,ind_zero]),2, function(x) diff(quantile(x,c(.025,.975)))))
+  else 
+    out <- mean(apply(as.matrix(b_post[,-ind_zero]),2, function(x) diff(quantile(x,c(.025,.975)))))
+  out
+}
+
+compareL <- function(zero=T,L_ord="blasso",ylim_L=c(0,5),cex_L=1,pos_L=0,cex.axis_L=.6) {
+  cc <- 0
+  L_blasso <- NULL; L_spike <- NULL; L_gdp <- NULL;
+  for (mm in mod) {
+    cc <- cc + 1
+    mod_ind <- mm$param_index
+    beta_true <- beta_lookup(mod_ind)
+    L_blasso[cc] <- m_zero(mod[[cc]]$blasso, beta_true,zero)
+    L_spike[cc] <- m_zero(mod[[cc]]$spike$b, beta_true,zero)
+    L_gdp[cc] <- m_zero(mod[[cc]]$gdp, beta_true,zero)
+    print(cc)
+  }
+
+  ord <- 1:length(mod)
+  if (L_ord == "blasso") {
+    ord <- order(L_blasso)
+  } else if (L_ord == "gdp") {
+    ord <- order(L_gdp)
+  } else if (L_ord == "ssvn") {
+    ord <- order(L_spike)
+  }
+
+  par(mar=c(4,4,0,0))
+  plot(L_blasso[ord],col="black",pch=1,ylim=ylim_L,cex=cex_L,
+       ylab=ifelse(zero,"M_zero","M_nonzero"),xlab="",lwd=2,xaxt="n",bty="n")
+  points(L_spike[ord],col="black",pch=2,cex=cex_L,lwd=2)
+  points(L_gdp[ord],col="black",pch=4,cex=cex_L,lwd=2)
+
+  simdat <- t(sapply(ord, function(o) mod[[o]]$param_index))
+  simdat <- cbind(
+    ifelse(simdat[,1] == 1, "n50", "n500"),
+    ifelse(simdat[,2] == 1, "p100", "p1000"),
+    ifelse(simdat[,3] == 1, "I", ifelse(simdat[,3] == 2, "S.1", "S.6")),
+    ifelse(simdat[,4] == 1, "b1", ifelse(simdat[,4] == 2, "b2", "b3")))
+  lab <- apply(simdat,1,function(x) paste(x,collapse="\n"))
+  axis(1,at=1:numdat,label=lab,pos=pos_L,tck=0,lty=0,cex.axis=cex.axis_L)
+  legend("topleft",cex=2,legend=c("blasso","ssvn","gdp"),pch=c(1,2,4),bty="n")
+  par(mar=c(5.1,4.1,4.1,2.1))
+  abline(v=5*(1:7),col=rgb(.5,.5,.5))
+
+  list("ord"=ord, "blasso"=L_blasso, "gdp"=L_gdp, "ssvn"=L_spike)
+}
+
+pdf("output/Lblasso.pdf",w=16,h=9)
+  L_blasso <- compareL(zero=T,L_ord="blasso",ylim_L=c(0,5),cex_L=1,pos_L=-.3,cex.axis_L=.6)
+dev.off()
+pdf("output/Lssvn.pdf",w=16,h=9)
+  L_ssvn <- compareL(zero=T,L_ord="ssvn",ylim_L=c(0,5),cex_L=1,pos_L=-.3,cex.axis_L=.6)
+dev.off()
+pdf("output/Lgdp.pdf",w=16,h=9)
+  L_gdp <- compareL(zero=T,L_ord="gdp",ylim_L=c(0,5),cex_L=1,pos_L=-.3,cex.axis_L=.6)
+dev.off()
+L_blasso
+
+pdf("output/L1blasso.pdf",w=16,h=9)
+  L1_blasso <- compareL(zero=F,L_ord="blasso",ylim_L=c(0,5),cex_L=1,pos_L=-.3,cex.axis_L=.6)
+dev.off()
+pdf("output/L1ssvn.pdf",w=16,h=9)
+  L1_ssvn <- compareL(zero=F,L_ord="ssvn",ylim_L=c(0,5),cex_L=1,pos_L=-.3,cex.axis_L=.6)
+dev.off()
+pdf("output/L1gdp.pdf",w=16,h=9)
+  L1_gdp <- compareL(zero=F,L_ord="gdp",ylim_L=c(0,5),cex_L=1,pos_L=-.3,cex.axis_L=.6)
+dev.off()
+L1_blasso
+
+
 # - posterior pred.
+  x <- t(sapply( 1:(n[n_i]), function(x) c(1, mvrnorm(0,Sig_Makers[[S_i]](p[p_i]))) ))
+  y <- x %*% betas[[beta_i]](p[p_i]) + rnorm(n[n_i])
 
