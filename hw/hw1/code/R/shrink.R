@@ -138,7 +138,7 @@ sapply(rmse_gdp[-1],mean) # blasso seems to perform a little better than gdp and
 # Compare Lasso and SSVN
 
 cms <- matrix(0,numdat,4)
-colnames(cms) <- c("++lasso","++ssvn","--lasso","--ssvn")
+colnames(cms) <- c("++lasso","++ssvs","--lasso","--ssvs")
 for (mod_n in 1:numdat) {
   true_beta <- beta_lookup(mod[[mod_n]]$param_index)
   postmean.gamma <- apply(mod[[mod_n]]$spike$gam,2,mean)
@@ -280,10 +280,28 @@ sim.post.pred <- function(B=2000,burn=1000) {
 
   blasso.pp <- get.post.pred(blasso_mod$beta)
   gdp.pp <- get.post.pred(gdp_mod$beta)
-  print(1)
-  ssvn.pp <- get.post.pred(ssvs_mod$beta, ifelse(apply(ssvs_mod$gam,2,mean) > .5, 1,0))
+  ssvs.pp <- get.post.pred(ssvs_mod$beta, ifelse(apply(ssvs_mod$gam,2,mean) > .5, 1,0))
 
-  list("y"=y,"x"=x,"blasso"=blasso.pp,"gdp"=gdp.pp,"ssvs"=ssvs.pp)
+  M <- cbind(blasso.pp,gdp.pp,ssvs.pp)
+  colnames(M) <- c("blasso","gdp","ssvs")
+
+  list("y"=y,"x"=x,"M"=M)
 }
 
 sim.pp <- sim.post.pred(B=100,burn=10)
+head(cbind(sim.pp$M,sim.pp$y))
+
+ordd <- order(sim.pp$y)
+
+pdf("output/postpred.pdf",w=16,h=9)
+  plot(sim.pp$y[ordd],col="grey",cex=3,pch=20,type='p',lwd=3,ylim=range(sim.pp$M),xlab="observations",ylab="Posterior Predictive Mean")
+  lines(sim.pp$M[ordd,1],cex=3,pch=20,lwd=3,col="blue")
+  lines(sim.pp$M[ordd,2],cex=3,pch=20,lwd=3,col="green")
+  lines(sim.pp$M[ordd,3],cex=3,pch=20,lwd=3,col="red")
+  legend("topleft",legend=c("Data","Blasso","GDP","SSVN"),lwd=3,col=c("grey","blue","green","red"),bty="n",cex=2)
+dev.off()
+
+rmse(sim.pp$M[,1],sim.pp$y) # blasso:  .1876811
+rmse(sim.pp$M[,2],sim.pp$y) # gdp   :  .148497
+rmse(sim.pp$M[,3],sim.pp$y) # ssvn  : 4.225246
+
