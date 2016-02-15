@@ -305,3 +305,6 @@ rmse(sim.pp$M[,1],sim.pp$y) # blasso:  .1876811
 rmse(sim.pp$M[,2],sim.pp$y) # gdp   :  .148497
 rmse(sim.pp$M[,3],sim.pp$y) # ssvn  : 4.225246
 
+#x <- t(sapply( 1:(50), function(x) c(1, mvrnorm(0,Sig_Maker(.1,100) ))))
+#y <- x %*% betas[[3]](100) + rnorm(50)
+#as.numeric(coef(cv.glmnet(x[,-1],y)))
