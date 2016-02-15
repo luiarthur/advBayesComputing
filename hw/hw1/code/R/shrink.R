@@ -170,7 +170,7 @@ compareVS <- function(c1=1,c2=2,ord=1,pos_rmse=0,cex.axis_rmse=1) {
   abline(v=5*(1:7),col=rgb(.5,.5,.5))
 }
 
-compareVS(1,2,1,-.05,.6)
+#compareVS(1,2,1,-.05,.6)
 pdf("output/lassoVssvnPP.pdf",w=16,h=9); compareVS(1,2,1,-.05,.6); dev.off() 
 pdf("output/ssvnVlassoPP.pdf",w=16,h=9); compareVS(1,2,2,-.05,.6); dev.off()
 pdf("output/lassoVssvnFF.pdf",w=16,h=9); compareVS(3,4,3,-.05,.6); dev.off()
@@ -178,7 +178,7 @@ pdf("output/ssvnVlassoFF.pdf",w=16,h=9); compareVS(3,4,4,-.05,.6); dev.off()
 
 apply(cms,2,mean)
 #  ++lasso    ++ssvn   --lasso    --ssvn
-#0.7317593 0.7477500 0.6325260 0.7224995  
+#0.7220000 0.7208333 0.6391333 0.8962522
 
 # - Compute mean(L_j: beta_j == 0)
 m_zero <- function(b_post,b_true,zero=T) {
@@ -243,7 +243,8 @@ dev.off()
 pdf("output/Lgdp.pdf",w=16,h=9)
   L_gdp <- compareL(zero=T,L_ord="gdp",ylim_L=c(0,5),cex_L=1,pos_L=-.3,cex.axis_L=.6)
 dev.off()
-L_blasso
+#L_blasso
+#compareL(zero=T,L_ord="ssvn",ylim_L=c(0,50),cex_L=1,pos_L=-.3,cex.axis_L=.6)
 
 pdf("output/L1blasso.pdf",w=16,h=9)
   L1_blasso <- compareL(zero=F,L_ord="blasso",ylim_L=c(0,5),cex_L=1,pos_L=-.3,cex.axis_L=.6)
@@ -254,10 +255,35 @@ dev.off()
 pdf("output/L1gdp.pdf",w=16,h=9)
   L1_gdp <- compareL(zero=F,L_ord="gdp",ylim_L=c(0,5),cex_L=1,pos_L=-.3,cex.axis_L=.6)
 dev.off()
-L1_blasso
+#L1_blasso
 
 
-# - posterior pred.
-  x <- t(sapply( 1:(n[n_i]), function(x) c(1, mvrnorm(0,Sig_Makers[[S_i]](p[p_i]))) ))
-  y <- x %*% betas[[beta_i]](p[p_i]) + rnorm(n[n_i])
+# - posterior pred.  mod[[7]]
 
+sim.post.pred <- function(B=2000,burn=1000) {
+  x <- t(sapply( 1:(50), function(x) c(1, mvrnorm(0,Sig_Maker(.6,100) ))))
+  y <- x %*% betas[[1]](100) + rnorm(50)
+
+  tt <- .05^2
+  cat("\nssvs: \n")
+  ssvs_mod <- spikeAndSlab(y=y, x=x, tau2=rep(tt,ncol(x)), g=100/tt, w=rep(.5,ncol(x)), B=B+burn, burn=burn, printProg=T, returnHyper=T)
+  cat("\nblasso: \n")
+  blasso_mod <- blasso(y=y,x=x,r=1,delta=1.5,B=B+burn,burn=burn, printProg=T, returnHyper=F)
+  cat("\ngdp: \n")
+  gdp_mod <- gdp(y=y, x=x, B=B+burn, burn=burn, printProg=T,returnHyper=F)
+
+  get.post.pred <- function(b,g=rep(1,ncol(x))) {
+    G <- diag(g)
+    y.pred <- x %*% G %*% t(b)
+    apply(t(y.pred),2,mean)
+  }
+
+  blasso.pp <- get.post.pred(blasso_mod$beta)
+  gdp.pp <- get.post.pred(gdp_mod$beta)
+  print(1)
+  ssvn.pp <- get.post.pred(ssvs_mod$beta, ifelse(apply(ssvs_mod$gam,2,mean) > .5, 1,0))
+
+  list("y"=y,"x"=x,"blasso"=blasso.pp,"gdp"=gdp.pp,"ssvs"=ssvs.pp)
+}
+
+sim.pp <- sim.post.pred(B=100,burn=10)
