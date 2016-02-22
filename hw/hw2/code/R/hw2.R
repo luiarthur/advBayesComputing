@@ -44,6 +44,7 @@ plot.coverage(b.post,pch=20,col="grey",cex=2,ylab="",xlab=expression(beta))
 
 
 
-# SMC
+# SMC idk...
 sourceCpp("../C++/smc.cpp")
 #update_smc(y, X[,1:3], diag(3), 10, 4, F)
+
