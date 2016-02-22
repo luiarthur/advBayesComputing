@@ -10,6 +10,14 @@ using namespace Rcpp;
 
 const double pi  =3.141592653589793238462;
 
+vec sample_replace( vec x, int n, vec prob ) {
+  NumericVector ret = Rcpp::RcppArmadillo::sample(
+      as<NumericVector>(wrap(x)), n, true, 
+      as<NumericVector>(wrap(prob))) ;
+  return ret;
+}
+
+
 double wsample( vec x, vec prob ) {
   NumericVector ret = Rcpp::RcppArmadillo::sample(
       as<NumericVector>(wrap(x)), 1, true, 
