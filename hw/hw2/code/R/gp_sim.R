@@ -7,7 +7,7 @@ system("mkdir -p output")
 
 n <- 1000
 sig2 <- .5
-sn <- 50
+sn <- 100
 s <- matrix(rnorm(sn*3),sn,3) # knots
 x <- matrix(rnorm(n*3),n,3)     # data (simulated covariates)
 y <- x[,1] + ifelse(x[,2]-.5 > 0, x[,2]-.5, 0) + x[,3]^2 + rnorm(n,0,sqrt(sig2)) # data (simulated responses)
