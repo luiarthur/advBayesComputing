@@ -15,7 +15,6 @@ C <- cov(t(rbind(x,s)))[1:n,-c(1:n)] # covariance between data and knots
 D <- as.matrix(dist(s))
 
 # y | ... ~ N(0,s^2 + K)
-sourceCpp("../C++/gp.cpp")
 system.time( out <- gp(y, x, s, C, D, cand_S=diag(3), B=30, burn=1, printProg=T) )
 
 par(mfrow=c(3,1))
