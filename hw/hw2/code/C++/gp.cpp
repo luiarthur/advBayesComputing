@@ -1,7 +1,11 @@
 //[[Rcpp::depends(RcppArmadillo)]]
 #include <../../../../cpp_functions/func.cpp> // wsample, ldnorm, mvrnorm
+#include <ctime> // timing
 
-
+double time_remain(time_t start, time_t end, int its_remaining) {
+  double out = difftime(end,start) * its_remaining;
+  return out;
+}
 
 mat wood_inv(double s2, mat I, mat H, mat Ht, mat Ksi) {
   mat out = I/s2 - H/s2* (Ksi + Ht*H / s2).i() * Ht/s2;
@@ -20,9 +24,10 @@ double log_like(vec y, double s2, double phi, double tau, mat D, mat C, mat I) {
   int n = I.n_rows;
   double val, sign, ldet;
 
-  log_det(val,sign, I/s2 + H*Ks*Ht);
+  log_det(val,sign, I/s2 + H*Ks*Ht); // This takes a long time.
   ldet = val;
 
+  //return (-.5 * ldet - .5 * y.t() * (H*Ks*Ht).i() * y)[0]; // This is twice as slow
   return (-.5 * ldet - .5 * y.t() * wood_inv(s2,I,H,Ht,Ksi) * y)[0];
 }
 
@@ -40,8 +45,11 @@ List gp(vec y, mat x, mat s, mat C, mat D, double cs_tau, double cs_phi, double 
   double log_ratio;
   double cand;
   List ret;
+  time_t start;
 
   for (int b=1; b<B+burn; b++) {
+    start = time(0);
+
     tau[b] = tau[b-1];
     phi[b] = phi[b-1];
     sig2[b] = sig2[b-1];
@@ -85,7 +93,7 @@ List gp(vec y, mat x, mat s, mat C, mat D, double cs_tau, double cs_phi, double 
     }
 
 
-    if (printProg) Rcout << "\rProgress: " << b+1 << "/" << B+burn;
+    if (printProg) Rcout << "\rProgress: " << b+1 << "/" << B+burn <<"; Time Remaining: " << time_remain(start, time(0), B+burn-b) << "       ";
   }
 
   vec out_tau  = tau.tail(B);   ret["tau"]  = out_tau;
