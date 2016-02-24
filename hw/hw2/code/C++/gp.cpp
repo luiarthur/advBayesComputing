@@ -6,7 +6,7 @@ void time_remain(clock_t start_time, int it, int total_its, int freq) {
   clock_t end_time = clock();
   int its_remaining = total_its - it;
   if (it % freq == 0) {
-    double out = ( (end_time-start_time) / 100000.0 / freq ) * its_remaining;
+    double out = ( (end_time-start_time) / 100000.0 / freq / 60) * its_remaining;
     Rcout << "\rProgress: " << it+1 << "/" << total_its <<"; Time Remaining: " << out << "         ";
   }
 }
@@ -26,9 +26,9 @@ double wood_ldet(mat C, mat Ks, mat Ksi, mat Ct, double s2, int n) {
   return ldet_1 + ldet_2 + ldet_3;
 }
 
-double log_like(vec y, double ls2, double lphi, double ltau, mat D, mat C, mat I) {
+double log_like(vec y, double ls2, double w, double ltau, mat D, mat C, mat I) {
   double s2 = exp(ls2);
-  double phi = exp(lphi);
+  double phi = 5 / (exp(-w)+1);
   double tau = exp(ltau);
 
   mat Ks = tau * exp(-phi*D);
@@ -44,7 +44,7 @@ double log_like(vec y, double ls2, double lphi, double ltau, mat D, mat C, mat I
 
 double log_prior(vec param) { // s2, phi, tau
   double ls2 = param[0];
-  double lphi = param[1];
+  double w = param[1];
   double ltau = param[2];
 
   double a_s2 = 2;
@@ -54,7 +54,8 @@ double log_prior(vec param) { // s2, phi, tau
   double a_tau = 2;
   double b_tau = 5;
 
-  return lphi - a_s2*ls2 - b_s2/exp(ls2) - a_tau*ltau - b_tau/exp(ltau);
+  //return lphi - a_s2*ls2 - b_s2/exp(ls2) - a_tau*ltau - b_tau/exp(ltau);
+  return ( -w-2*log(exp(-w)+1) ) - a_s2*ls2 - b_s2/exp(ls2) - a_tau*ltau - b_tau/exp(ltau);
 }
 
 //[[Rcpp::export]]
@@ -88,7 +89,10 @@ List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, int B, int burn, bool pri
     if (printProg) time_remain(start, b, B+burn-1, freq);
   }
 
-  param = exp(param);
+  param.col(0) = exp(param.col(0));
+  param.col(1) = 5 / ( exp(-param.col(1))+1 );
+  param.col(2) = exp(param.col(2));
+
   ret["param"] = param.tail_rows(B);
   ret["acc_rate"] = acc_rate * 1.0 / B;
 
