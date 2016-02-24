@@ -2,9 +2,12 @@
 #include <../../../../cpp_functions/func.cpp> // wsample, ldnorm, mvrnorm
 #include <ctime> // timing
 
-double time_remain(time_t start, time_t end, int its_remaining) {
-  double out = difftime(end,start) * its_remaining;
-  return out;
+void time_remain(time_t start, time_t end, int its_remaining, int it, int total_its, int freq) {
+  if (it % freq == 0) {
+    Rcout << difftime(end, start);
+    double out = ( difftime(end,start) / freq ) * its_remaining;
+    Rcout << "\rProgress: " << it+1 << "/" << total_its <<"; Time Remaining: " << out << "         ";
+  }
 }
 
 mat wood_inv(double s2, mat I, mat C, mat Ct, mat Ksi) {
@@ -22,11 +25,11 @@ double wood_ldet(mat C, mat Ks, mat Ksi, mat Ct, double s2, int n) {
   return ldet_1 + ldet_2 + ldet_3;
 }
 
-double log_dinvgamma(double x, double a, double b) {
-  return (-a-1) * log(x) - b/x;
-}
+double log_like(vec y, double ls2, double lphi, double ltau, mat D, mat C, mat I) {
+  double s2 = exp(ls2);
+  double phi = exp(lphi);
+  double tau = exp(ltau);
 
-double log_like(vec y, double s2, double phi, double tau, mat D, mat C, mat I) {
   mat Ks = tau * exp(-phi*D);
   mat Ksi = Ks.i();
   mat Ct = C.t();
@@ -38,74 +41,53 @@ double log_like(vec y, double s2, double phi, double tau, mat D, mat C, mat I) {
   return (-.5 * ldet - .5 * y.t() * wood_inv(s2,I,C,Ct,Ksi) * y)[0];
 }
 
+double log_prior(vec param) { // s2, phi, tau
+  double ls2 = param[0];
+  double lphi = param[1];
+  double ltau = param[2];
+
+  double a_s2 = 2;
+  double b_s2 = 5;
+  double a_phi = 0;
+  double b_phi = 5;
+  double a_tau = 2;
+  double b_tau = 5;
+
+  return lphi - a_s2*ls2 - b_s2/exp(ls2) - a_tau*ltau - b_tau/exp(ltau);
+}
 
 //[[Rcpp::export]]
-List gp(vec y, mat x, mat s, mat C, mat D, double cs_tau, double cs_phi, double cs_sig2, int B, int burn, bool printProg) {
+List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, int B, int burn, bool printProg) {
   int n = y.size();
+  int p = x.n_cols;
   mat In = eye<mat>(n,n);
-  int acc_tau = 0;
-  int acc_phi = 0;
-  int acc_sig2 = 0;
-  vec tau = ones<vec>(B+burn);
-  vec phi = ones<vec>(B+burn);
-  vec sig2 = ones<vec>(B+burn);
+  int acc_rate = 0;
+  mat param = zeros<mat>(B+burn,3);
   double log_ratio;
-  double cand;
+  vec cand;
   List ret;
   time_t start;
+  int freq = 10;
 
   for (int b=1; b<B+burn; b++) {
-    start = time(0);
-
-    tau[b] = tau[b-1];
-    phi[b] = phi[b-1];
-    sig2[b] = sig2[b-1];
+    if (b % freq == 0) start = time(0);
 
     // Update tau: IG(2,5) prior
-    cand = randn() * cs_tau + tau[b];
-    if (cand > 0) {
-      log_ratio = log_like(y, sig2[b], phi[b], cand, D, C, In) + 
-                  log_dinvgamma(cand,2,5) - 
-                  log_like(y, sig2[b], phi[b], tau[b], D, C, In) -
-                  log_dinvgamma(tau[b],2,5);
-      if ( log_ratio > log(randu()) ) {
-        tau[b] = cand;
-        acc_tau++;
-      }
+    cand = mvrnorm(vectorise(param.row(b-1)), cand_S); // s2, phi, tau
+    log_ratio = log_like(y, cand[0], cand[1], cand[2], D, C, In) + 
+                log_prior(cand) - 
+                log_like(y, param(b-1,0), param(b-1,1), param(b-1,2), D, C, In) -
+                log_prior(  vectorise(param.row(b-1))  );
+    if ( log_ratio > log(randu()) ) {
+      param.row(b) = reshape(cand,1,p);
     }
 
-    // Update phi: Uniform(0,5) prior
-    cand = randn() * cs_phi + phi[b];
-    if (0 < cand && cand < 5) {
-      log_ratio = log_like(y, sig2[b] , cand, tau[b], D, C, In) - 
-                  log_like(y, sig2[b], phi[b], tau[b], D, C, In);
-      if ( log_ratio > log(randu()) ) {
-        phi[b] = cand;
-        acc_phi++;
-      }
-    }
-
-
-    // Update sig2: InvGamma(2,1) prior
-    cand = randn() * cs_sig2 + sig2[b];
-    if (cand > 0) {
-      log_ratio = log_like(y, cand, phi[b], tau[b], D, C, In) + 
-                  log_dinvgamma(cand,2,1) - 
-                  log_like(y, sig2[b], phi[b], tau[b], D, C, In) -
-                  log_dinvgamma(sig2[b],2,1);
-      if ( log_ratio > log(randu()) ) {
-        sig2[b] = cand;
-        acc_sig2++;
-      }
-    }
-
-
-    if (printProg) Rcout << "\rProgress: " << b+1 << "/" << B+burn <<"; Time Remaining: " << time_remain(start, time(0), B+burn-b) << "       ";
+    if (printProg) time_remain(start, time(0), B+burn-b, b, B+burn, freq);
   }
 
-  vec out_tau  = tau.tail(B);   ret["tau"]  = out_tau;
-  vec out_phi  = phi.tail(B);   ret["phi"]  = out_phi;
-  vec out_sig2 = sig2.tail(B);  ret["sig2"] = out_sig2;
+  param = exp(param);
+  ret["param"] = param.tail_rows(B);
+  ret["acc_rate"] = acc_rate * 1.0 / B;
 
   return ret;
 }
