@@ -2,10 +2,11 @@
 #include <../../../../cpp_functions/func.cpp> // wsample, ldnorm, mvrnorm
 #include <ctime> // timing
 
-void time_remain(time_t start, time_t end, int its_remaining, int it, int total_its, int freq) {
+void time_remain(clock_t start_time, int it, int total_its, int freq) {
+  clock_t end_time = clock();
+  int its_remaining = total_its - it;
   if (it % freq == 0) {
-    Rcout << difftime(end, start);
-    double out = ( difftime(end,start) / freq ) * its_remaining;
+    double out = ( (end_time-start_time) / 100000.0 / freq ) * its_remaining;
     Rcout << "\rProgress: " << it+1 << "/" << total_its <<"; Time Remaining: " << out << "         ";
   }
 }
@@ -70,7 +71,7 @@ List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, int B, int burn, bool pri
   int freq = 10;
 
   for (int b=1; b<B+burn; b++) {
-    if (b % freq == 0) start = time(0);
+    if (b % freq == 0) start = clock();
 
     // Update tau: IG(2,5) prior
     cand = mvrnorm(vectorise(param.row(b-1)), cand_S); // s2, phi, tau
@@ -82,7 +83,8 @@ List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, int B, int burn, bool pri
       param.row(b) = reshape(cand,1,p);
     }
 
-    if (printProg) time_remain(start, time(0), B+burn-b, b, B+burn, freq);
+    //if (printProg) Rcout << "\rProgress: " << b << "/" << B+burn-1;
+    if (printProg) time_remain(start, b, B+burn-1, freq);
   }
 
   param = exp(param);
