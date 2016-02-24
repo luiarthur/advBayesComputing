@@ -16,7 +16,7 @@ D <- as.matrix(dist(s))
 
 # y | ... ~ N(0,s^2 + K)
 sourceCpp("../C++/gp.cpp")
-system.time( out <- gp(y, x, s, C, D, cs_tau=1, cs_phi=1, cs_sig2=1, B=1000, burn=1000, printProg=T) )
+system.time( out <- gp(y, x, s, C, D, cs_tau=1, cs_phi=1, cs_sig2=1, B=3000, burn=1000, printProg=T) )
 
 par(mfrow=c(3,1))
   plot(out$tau,type="l")
