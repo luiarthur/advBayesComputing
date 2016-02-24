@@ -7,9 +7,19 @@ double time_remain(time_t start, time_t end, int its_remaining) {
   return out;
 }
 
-mat wood_inv(double s2, mat I, mat H, mat Ht, mat Ksi) {
-  mat out = I/s2 - H/s2* (Ksi + Ht*H / s2).i() * Ht/s2;
+mat wood_inv(double s2, mat I, mat C, mat Ct, mat Ksi) {
+  mat out = I/s2 - C/s2* (Ksi + Ct*C / s2).i() * Ct/s2;
   return out;
+}
+
+double wood_ldet(mat C, mat Ks, mat Ksi, mat Ct, double s2, int n) {
+  double ldet_1,ldet_2, ldet_3, sign;
+
+  log_det(ldet_1,sign, Ksi + Ct*C/s2);
+  log_det(ldet_2,sign, Ks);
+  ldet_3 = n*log(s2);
+
+  return ldet_1 + ldet_2 + ldet_3;
 }
 
 double log_dinvgamma(double x, double a, double b) {
@@ -19,16 +29,13 @@ double log_dinvgamma(double x, double a, double b) {
 double log_like(vec y, double s2, double phi, double tau, mat D, mat C, mat I) {
   mat Ks = tau * exp(-phi*D);
   mat Ksi = Ks.i();
-  mat H = C * Ksi;
-  mat Ht = H.t();
+  mat Ct = C.t();
   int n = I.n_rows;
-  double val, sign, ldet;
+  double ldet;
+  
+  ldet = wood_ldet(C,Ks,Ksi,Ct,s2,n);
 
-  log_det(val,sign, I/s2 + H*Ks*Ht); // This takes a long time.
-  ldet = val;
-
-  //return (-.5 * ldet - .5 * y.t() * (H*Ks*Ht).i() * y)[0]; // This is twice as slow
-  return (-.5 * ldet - .5 * y.t() * wood_inv(s2,I,H,Ht,Ksi) * y)[0];
+  return (-.5 * ldet - .5 * y.t() * wood_inv(s2,I,C,Ct,Ksi) * y)[0];
 }
 
 

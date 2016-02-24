@@ -15,7 +15,7 @@ C <- cov(t(rbind(x,s)))[1:n,-c(1:n)] # covariance between data and knots
 D <- as.matrix(dist(s))
 
 # y | ... ~ N(0,s^2 + K)
-system.time( out <- gp(y, x, s, C, D, cs_tau=1, cs_phi=1, cs_sig2=1, B=3000, burn=1000, printProg=T) )
+system.time( out <- gp(y, x, s, C, D, cs_tau=1, cs_phi=1, cs_sig2=1, B=10, burn=10, printProg=T) )
 
 par(mfrow=c(3,1))
   plot(out$tau,type="l")
