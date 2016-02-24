@@ -15,10 +15,11 @@ C <- cov(t(rbind(x,s)))[1:n,-c(1:n)] # covariance between data and knots
 D <- as.matrix(dist(s))
 
 # y | ... ~ N(0,s^2 + K)
-system.time( out <- gp(y, x, s, C, D, cs_tau=1, cs_phi=1, cs_sig2=1, B=10, burn=10, printProg=T) )
+sourceCpp("../C++/gp.cpp")
+system.time( out <- gp(y, x, s, C, D, cand_S=diag(3), B=30, burn=1, printProg=T) )
 
 par(mfrow=c(3,1))
-  plot(out$tau,type="l")
-  plot(out$phi,type="l")
-  plot(out$sig2,type="l")
+  plot(out$param[,1],type="l",ylab=expression(sigma^2))
+  plot(out$param[,2],type="l",ylab=expression(phi))
+  plot(out$param[,3],type="l",ylab=expression(tau))
 par(mfrow=c(1,1))
