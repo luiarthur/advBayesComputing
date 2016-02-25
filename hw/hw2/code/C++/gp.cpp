@@ -55,7 +55,7 @@ double log_prior(vec param) { // s2, phi, tau
   double b_tau = 5;
 
   //return lphi - a_s2*ls2 - b_s2/exp(ls2) - a_tau*ltau - b_tau/exp(ltau);
-  return ( -w-2*log(exp(-w)+1) ) - a_s2*ls2 - b_s2/exp(ls2) - a_tau*ltau - b_tau/exp(ltau);
+  return ( w-2*log(exp(w)+1) ) - a_s2*ls2 - b_s2/exp(ls2) - a_tau*ltau - b_tau/exp(ltau);
 }
 
 //[[Rcpp::export]]
@@ -90,7 +90,7 @@ List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, int B, int burn, bool pri
   }
 
   param.col(0) = exp(param.col(0));
-  param.col(1) = 5 / ( exp(-param.col(1))+1 );
+  param.col(1) = (5*exp(w)+0) / ( exp(param.col(1))+1 );
   param.col(2) = exp(param.col(2));
 
   ret["param"] = param.tail_rows(B);
