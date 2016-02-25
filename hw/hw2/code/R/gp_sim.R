@@ -11,7 +11,9 @@ sig2 <- .5
 sn <- 100
 s <- matrix(rnorm(sn*3),sn,3) # knots
 x <- matrix(rnorm(n*3),n,3)     # data (simulated covariates)
-y <- x[,1] + ifelse(x[,2]-.5 > 0, x[,2]-.5, 0) + x[,3]^2 + rnorm(n,0,sqrt(sig2)) # data (simulated responses)
+mu <- x[,1] + ifelse(x[,2]-.5 > 0, x[,2]-.5, 0) + x[,3]^2
+mu <- sort(mu)
+y <- mu + rnorm(n,0,sqrt(sig2)) # data (simulated responses)
 C <- cov(t(rbind(x,s)))[1:n,-c(1:n)] # covariance between data and knots
 D <- as.matrix(dist(s))
 
@@ -34,3 +36,20 @@ apply(out$param,2,sd)
 apply(out$param,2,quantile)
 
 
+onePred <- function(param,Cs,Ds) {
+  phi <- param[2]
+  tau <- param[3]
+  
+  Ks <- tau * exp(-phi * Ds)
+  ks <- ncol(Ks)
+
+  mu_star <- mvrnorm(rep(0,ks), Ks)
+  mu <- Cs %*% solve(Ks) %*% mu_star
+
+  mu
+}
+
+system.time( preds <- t(apply(out$param[1:30,],1,function(p) onePred(p,C,D))) )
+
+plot(apply(preds,2,mean),type='l',ylim=c(-3,10))
+points(mu,type='l',lwd=3,col='grey')
