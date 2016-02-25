@@ -1,6 +1,7 @@
 set.seed(268)
 library(Rcpp)
 Sys.setenv("PKG_CXXFLAGS"="-std=c++11") # enable c++11, for RcppArmadillo
+source("../../../../R_Functions/plotPost.R",chdir=T)
 sourceCpp("../../../../cpp_functions/func.cpp")
 sourceCpp("../C++/gp.cpp")
 system("mkdir -p output")
@@ -22,3 +23,14 @@ par(mfrow=c(3,1))
   plot(out$param[,2],type="l",ylab=expression(phi))
   plot(out$param[,3],type="l",ylab=expression(tau))
 par(mfrow=c(1,1))
+
+out$acc_rate
+plot.post(out$param[,1],stay=T)
+plot.post(out$param[,2],stay=T)
+plot.post(out$param[,3],stay=T)
+
+apply(out$param,2,mean)
+apply(out$param,2,sd)
+apply(out$param,2,quantile)
+
+
