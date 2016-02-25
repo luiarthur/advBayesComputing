@@ -82,7 +82,7 @@ List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, int B, int burn, bool pri
                 log_prior(  vectorise(param.row(b-1))  );
     if ( log_ratio > log(randu()) ) {
       param.row(b) = reshape(cand,1,p);
-      acc_rate++;
+      if (b > burn) acc_rate++;
     }
 
     //if (printProg) Rcout << "\rProgress: " << b << "/" << B+burn-1;
