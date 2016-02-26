@@ -2,13 +2,15 @@
 #include <../../../../cpp_functions/func.cpp> // wsample, ldnorm, mvrnorm
 #include <time.h> // timing
 
-void time_remain(time_t start_time, int it, int total_its, int freq) {
-  time_t end_time;
-  time(&end_time);
+void time_remain(clock_t start_time, int it, int total_its, int freq) {
+  clock_t end_time;
+  end_time = clock();
   int its_remaining = total_its - it;
   if (it % freq == 0) {
-    double out = difftime(end_time,start_time) * its_remaining / freq / 60 ;
-    Rcout << "\rProgress: " << it << "/" << total_its+1 <<"; Time Remaining: " << out << " mins        ";
+    double time_elapsed = ((float)end_time - (float)start_time) / CLOCKS_PER_SEC * its_remaining / freq ;
+    int mins = (int) time_elapsed / 60;
+    int secs = (int) time_elapsed % 60;
+    Rcout << "\rProgress: " << it << "/" << total_its+1 <<"; Time Remaining: " << mins << "m " << secs << "s       ";
   }
 }
 
@@ -60,28 +62,25 @@ double log_prior(vec param) { // s2, phi, tau
 }
 
 //[[Rcpp::export]]
-List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, int B, int burn, bool printProg) {
+List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, vec init, int B, int burn, bool printProg) {
   int n = y.size();
-  int num_params = 3;
+  int num_params = cand_S.n_rows;
   mat In = eye<mat>(n,n);
   int acc_rate = 0;
   mat param = zeros<mat>(B+burn,num_params);
   double log_ratio;
   vec cand;
   List ret;
-  time_t start_time;
+  clock_t start_time = clock();
   int freq = 50;
+  param.row(0) = reshape(init,1,num_params);
 
   for (int b=1; b<B+burn; b++) {
-    if (b % freq == 0) time(&start_time);
-
     // Update tau: IG(2,5) prior
     cand = mvrnorm(vectorise(param.row(b-1)), cand_S); // s2, phi, tau
     //cand[1] = log(.25);
-    log_ratio = log_like(y, cand[0], cand[1], cand[2], D, C, In) + 
-                log_prior(cand) - 
-                log_like(y, param(b-1,0), param(b-1,1), param(b-1,2), D, C, In) -
-                log_prior(  vectorise(param.row(b-1))  );
+    log_ratio = log_like(y, cand[0], cand[1], cand[2], D, C, In) + log_prior(cand) - 
+                log_like(y, param(b-1,0), param(b-1,1), param(b-1,2), D, C, In) - log_prior(  vectorise(param.row(b-1))  );
     if ( log_ratio > log(randu()) ) {
       param.row(b) = reshape(cand,1,num_params);
       if (b > burn) acc_rate++;
@@ -89,9 +88,10 @@ List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, int B, int burn, bool pri
       param.row(b) = param.row(b-1);
     }
 
-    //if (printProg) Rcout << "\rProgress: " << b << "/" << B+burn-1;
     if (printProg) time_remain(start_time, b, B+burn-1, freq);
+    if (b % freq == 0) start_time = clock();
   }
+  Rcout << endl;
 
   param.col(0) = exp(param.col(0));
   param.col(1) = (5*exp(param.col(1))+0) / ( exp(param.col(1))+1 );

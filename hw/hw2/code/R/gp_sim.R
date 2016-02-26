@@ -3,25 +3,33 @@ library(Rcpp)
 system("mkdir -p output")
 Sys.setenv("PKG_CXXFLAGS"="-std=c++11") # enable c++11, for RcppArmadillo
 source("../../../../R_Functions/plotPost.R",chdir=T)
+cat("sourcing func.cpp...\n")
 sourceCpp("../../../../cpp_functions/func.cpp")
+cat("sourcing gp.cpp...\n")
 sourceCpp("../C++/gp.cpp")
+cat("Starting Main Program...\n")
 
 n <- 1000
 sig2 <- .5
 sn <- 100
-s <- matrix(rnorm(sn*3),sn,3) # knots
 x <- matrix(rnorm(n*3),n,3)     # data (simulated covariates)
 mu <- x[,1] + ifelse(x[,2]-.5 > 0, x[,2]-.5, 0) + x[,3]^2
+s <- matrix(rnorm(sn*ncol(x)),sn,ncol(x)) # knots
+# Sorting
+ord <- order(mu)
 mu <- sort(mu)
+x <- x[ord,]
+# End Sorting
 y <- mu + rnorm(n,0,sqrt(sig2)) # data (simulated responses)
-C1 <- cov(t(x),t(s)) # covariance between data and knots
-D <- as.matrix(dist(s))
+C <- cov(t(x),t(s)) # covariance between data and knots
+D <- as.matrix(dist(s))^2
 
 # y | ... ~ N(0,s^2 + K)
-prelim <- gp(y, x, s, C, D, cand_S=diag(3), B=100, burn=100, printProg=T)
+prelim <- gp(y, x, s, C, D, cand_S=diag(3), init=rep(0,3), B=500, burn=500, printProg=T)
 V <- cov( prelim$param )
-system.time( out <- gp(y, x, s, C, D, cand_S=V, B=2000, burn=500, printProg=T) )
+system.time( out <- gp(y, x, s, C, D, cand_S=V, init=tail(out$param,1), B=2000, burn=500, printProg=T) )
 
+colnames(out$param) <- c("s2","phi","tau")
 par(mfrow=c(3,1))
   plot(out$param[,1],type="l",ylab=expression(sigma^2))
   plot(out$param[,2],type="l",ylab=expression(phi))
@@ -38,9 +46,11 @@ apply(out$param,2,sd)
 apply(out$param,2,quantile)
 
 
-onePred <- function(param,Cs,Ds) {
+onePred <- function(param,o) {
   phi <- param[2]
   tau <- param[3]
+  Cs <- o$C
+  Ds <- o$D
   
   Ks <- tau * exp(-phi * Ds)
   ks <- ncol(Ks)
@@ -51,15 +61,18 @@ onePred <- function(param,Cs,Ds) {
   mu
 }
 
-system.time( preds <- t(apply(out$param,1,function(p) onePred(p,C,D))) )
+system.time( preds <- t(apply(out$param,1,function(p) onePred(p,out))) )
 
-plot(apply(preds,2,mean),type='l',ylim=c(-3,10),col="blue")
-points(mu,type='l',lwd=3,col='grey')
+plot(apply(preds,2,mean),type='l',ylim=c(-30,30),col="blue",lwd=2)
+lines(apply(preds,2,function(x)quantile(x,.025)),type='l',ylim=range(mu),col="blue",lwd=2)
+lines(apply(preds,2,function(x)quantile(x,.975)),type='l',ylim=range(mu),col="blue",lwd=2)
+lines(mu,lwd=3,col='grey')
 
 
 ### MLE?
-M <- exp(-1*D) * 2
+M <- 3 * exp(-3*D)
 ms <- mvrnorm(rep(0,ncol(M)), M)
 mu_pred <- C %*% solve(M) %*% ms
 
-plot(mu_pred,type='l')
+plot(mu,lwd=3,col="grey",type='l',ylim=c(-10,10))
+lines(mu_pred,ylim=range(mu))
