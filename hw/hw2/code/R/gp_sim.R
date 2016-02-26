@@ -24,13 +24,8 @@ p <- 2
 x <- matrix(rnorm(n*p),n,p)     # data (simulated covariates)
 f <- function(xx) ifelse(xx[,1]-.5 > 0, xx[,1]-.5, 0) + xx[,2]^2
 mu <- f(x)
-s <- x#matrix(rnorm(sn*p),sn,p) # knots
+s <- matrix(rnorm(sn*p),sn,p) # knots
 
-# Sorting
-ord <- order(mu)
-mu <- sort(mu)
-x <- x[ord,]
-# End Sorting
 y <- mu + rnorm(n,0,sqrt(sig2)) # data (simulated responses)
 C <- cov(t(x),t(s)) # covariance between data and knots
 D <- as.matrix(dist(s))^2
