@@ -69,7 +69,7 @@ List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, int B, int burn, bool pri
   vec cand;
   List ret;
   time_t start;
-  int freq = 10;
+  int freq = 50;
 
   for (int b=1; b<B+burn; b++) {
     if (b % freq == 0) start = clock();

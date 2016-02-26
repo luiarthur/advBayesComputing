@@ -18,7 +18,9 @@ C <- cov(t(rbind(x,s)))[1:n,-c(1:n)] # covariance between data and knots
 D <- as.matrix(dist(s))
 
 # y | ... ~ N(0,s^2 + K)
-system.time( out <- gp(y, x, s, C, D, cand_S=diag(3), B=2000, burn=100, printProg=T) )
+prelim <- gp(y, x, s, C, D, cand_S=diag(3), B=500, burn=100, printProg=T)
+V <- cov( prelim$param )
+system.time( out <- gp(y, x, s, C, D, cand_S=V, B=2000, burn=100, printProg=T) )
 
 par(mfrow=c(3,1))
   plot(out$param[,1],type="l",ylab=expression(sigma^2))
