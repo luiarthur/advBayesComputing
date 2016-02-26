@@ -90,7 +90,7 @@ List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, int B, int burn, bool pri
   }
 
   param.col(0) = exp(param.col(0));
-  param.col(1) = (5*exp(w)+0) / ( exp(param.col(1))+1 );
+  param.col(1) = (5*exp(param.col(1))+0) / ( exp(param.col(1))+1 );
   param.col(2) = exp(param.col(2));
 
   ret["param"] = param.tail_rows(B);
