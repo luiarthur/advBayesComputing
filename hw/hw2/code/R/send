@@ -3,11 +3,10 @@
 username="alui2" # Change this to your user name
 server="citrisdance"
 
-#R CMD BATCH gp_sim.R
 
 ssh $username@$server.soe.ucsc.edu <<EOF
   cd advBayesComputing/hw/hw2/code/R
   git pull
   
-  R -e 'source("gp_sim.R")'
+  Rscript gp_sim.R
 EOF
