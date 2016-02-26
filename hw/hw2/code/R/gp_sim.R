@@ -36,7 +36,7 @@ V <- round( cov(prelim$param) )
 diag(V) <- ifelse(diag(V)<1,1,diag(V))
 system.time( out <- gp(y, x, s, C, D, cand_S=V, init=tail(prelim$param,1), B=3000, burn=5000, printProg=T) )
 
-save(out,"output/out.RData")
+save(out,file="output/out.RData")
 
 colnames(out$param) <- c("s2","phi","tau")
 par(mfrow=c(3,1))
