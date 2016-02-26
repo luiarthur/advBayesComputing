@@ -5,7 +5,7 @@ server="firedance"
 
 sftp $username@$server.soe.ucsc.edu <<EOF
   cd advBayesComputing/hw/hw2/code/R/output
-  get output/out.RData
+  get out.RData
 EOF
 
 mv out.RData output/out.RData

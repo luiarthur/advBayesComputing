@@ -6,5 +6,5 @@ server="firedance"
 ssh $username@$server.soe.ucsc.edu <<EOF
   cd advBayesComputing/hw/hw2/code/R
   git pull
-  Rscript gp_sim.R
+  R CMD BATCH gp_sim.R
 EOF
