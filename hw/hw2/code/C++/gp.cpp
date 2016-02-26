@@ -29,10 +29,10 @@ double wood_ldet(mat C, mat Ks, mat Ksi, mat Ct, double s2, int n) {
   return ldet_1 + ldet_2 + ldet_3;
 }
 
-double log_like(vec y, double ls2, double w, double ltau, mat D, mat C, mat I) {
-  double s2 = exp(ls2);
-  double phi = 5 / (exp(-w)+1);
-  double tau = exp(ltau);
+double log_like(vec y, vec param, mat D, mat C, mat I) {
+  double s2 = exp(param[0]);
+  double phi = 5 / (exp(-param[1])+1);
+  double tau = exp(param[2]);
 
   mat Ks = tau * exp(-phi*D);
   mat Ksi = Ks.i();
@@ -57,8 +57,7 @@ double log_prior(vec param) { // s2, phi, tau
   double a_tau = 2;
   double b_tau = 5;
 
-  //return lphi - a_s2*ls2 - b_s2/exp(ls2) - a_tau*ltau - b_tau/exp(ltau);
-  return ( w-2*log(exp(w)+1) ) - a_s2*ls2 - b_s2/exp(ls2) - a_tau*ltau - b_tau/exp(ltau);
+  return ( w-2*log(exp(w)+1) ) - a_s2*ls2 - b_s2*exp(-ls2) - a_tau*ltau - b_tau*exp(-ltau);
 }
 
 //[[Rcpp::export]]
@@ -76,11 +75,9 @@ List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, vec init, int B, int burn
   param.row(0) = reshape(init,1,num_params);
 
   for (int b=1; b<B+burn; b++) {
-    // Update tau: IG(2,5) prior
     cand = mvrnorm(vectorise(param.row(b-1)), cand_S); // s2, phi, tau
-    //cand[1] = log(.25);
-    log_ratio = log_like(y, cand[0], cand[1], cand[2], D, C, In) + log_prior(cand) - 
-                log_like(y, param(b-1,0), param(b-1,1), param(b-1,2), D, C, In) - log_prior(  vectorise(param.row(b-1))  );
+    log_ratio = log_like(y, cand, D, C, In) + log_prior(cand) - 
+                log_like(y, vectorise(param.row(b-1)), D, C, In) - log_prior( vectorise(param.row(b-1)) );
     if ( log_ratio > log(randu()) ) {
       param.row(b) = reshape(cand,1,num_params);
       if (b > burn) acc_rate++;
