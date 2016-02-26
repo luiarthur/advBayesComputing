@@ -12,9 +12,10 @@ cat("Starting Main Program...\n")
 n <- 1000
 sig2 <- .5
 sn <- 100
-x <- matrix(rnorm(n*3),n,3)     # data (simulated covariates)
+p <- 2
+x <- matrix(rnorm(n*p),n,p)     # data (simulated covariates)
 mu <- x[,1] + ifelse(x[,2]-.5 > 0, x[,2]-.5, 0) + x[,3]^2
-s <- matrix(rnorm(sn*ncol(x)),sn,ncol(x)) # knots
+s <- matrix(rnorm(sn*p),sn,p) # knots
 # Sorting
 ord <- order(mu)
 mu <- sort(mu)
@@ -74,5 +75,6 @@ M <- 3 * exp(-3*D)
 ms <- mvrnorm(rep(0,ncol(M)), M)
 mu_pred <- C %*% solve(M) %*% ms
 
-plot(mu,lwd=3,col="grey",type='l',ylim=c(-10,10))
-lines(mu_pred,ylim=range(mu))
+plot(mu,lwd=3,col="grey",pch=20,ylim=c(-10,10))
+points(mu_pred,pch=20,ylim=range(mu))
+points(mu-mu_pred,pch=20,col="red")
