@@ -1,10 +1,10 @@
 set.seed(268)
 library(Rcpp)
+system("mkdir -p output")
 Sys.setenv("PKG_CXXFLAGS"="-std=c++11") # enable c++11, for RcppArmadillo
 source("../../../../R_Functions/plotPost.R",chdir=T)
 sourceCpp("../../../../cpp_functions/func.cpp")
 sourceCpp("../C++/gp.cpp")
-system("mkdir -p output")
 
 n <- 1000
 sig2 <- .5
@@ -14,13 +14,13 @@ x <- matrix(rnorm(n*3),n,3)     # data (simulated covariates)
 mu <- x[,1] + ifelse(x[,2]-.5 > 0, x[,2]-.5, 0) + x[,3]^2
 mu <- sort(mu)
 y <- mu + rnorm(n,0,sqrt(sig2)) # data (simulated responses)
-C <- cov(t(rbind(x,s)))[1:n,-c(1:n)] # covariance between data and knots
+C1 <- cov(t(x),t(s)) # covariance between data and knots
 D <- as.matrix(dist(s))
 
 # y | ... ~ N(0,s^2 + K)
-prelim <- gp(y, x, s, C, D, cand_S=diag(3), B=500, burn=100, printProg=T)
+prelim <- gp(y, x, s, C, D, cand_S=diag(3), B=100, burn=100, printProg=T)
 V <- cov( prelim$param )
-system.time( out <- gp(y, x, s, C, D, cand_S=V, B=2000, burn=100, printProg=T) )
+system.time( out <- gp(y, x, s, C, D, cand_S=V, B=2000, burn=500, printProg=T) )
 
 par(mfrow=c(3,1))
   plot(out$param[,1],type="l",ylab=expression(sigma^2))
@@ -51,7 +51,15 @@ onePred <- function(param,Cs,Ds) {
   mu
 }
 
-system.time( preds <- t(apply(out$param[1:30,],1,function(p) onePred(p,C,D))) )
+system.time( preds <- t(apply(out$param,1,function(p) onePred(p,C,D))) )
 
-plot(apply(preds,2,mean),type='l',ylim=c(-3,10))
+plot(apply(preds,2,mean),type='l',ylim=c(-3,10),col="blue")
 points(mu,type='l',lwd=3,col='grey')
+
+
+### MLE?
+M <- exp(-1*D) * 2
+ms <- mvrnorm(rep(0,ncol(M)), M)
+mu_pred <- C %*% solve(M) %*% ms
+
+plot(mu_pred,type='l')
