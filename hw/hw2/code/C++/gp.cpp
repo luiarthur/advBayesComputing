@@ -7,7 +7,7 @@ void time_remain(clock_t start_time, int it, int total_its, int freq) {
   int its_remaining = total_its - it;
   if (it % freq == 0) {
     double out = ( (end_time-start_time) / 100000.0 / freq / 60) * its_remaining;
-    Rcout << "\rProgress: " << it+1 << "/" << total_its <<"; Time Remaining: " << out << " mins        ";
+    Rcout << "\rProgress: " << it << "/" << total_its+1 <<"; Time Remaining: " << out << " mins        ";
   }
 }
 
