@@ -3,7 +3,6 @@ library(Rcpp)
 system("mkdir -p output")
 Sys.setenv("PKG_CXXFLAGS"="-std=c++11") # enable c++11, for RcppArmadillo
 source("../../../../R_Functions/plotPost.R",chdir=T)
-source("plotmap.R")
 cat("sourcing func.cpp...\n")
 sourceCpp("../../../../cpp_functions/func.cpp")
 cat("sourcing gp.cpp...\n")
@@ -35,10 +34,6 @@ x <- x[ord,]
 y <- mu + rnorm(n,0,sqrt(sig2)) # data (simulated responses)
 C <- cov(t(x),t(s)) # covariance between data and knots
 D <- as.matrix(dist(s))^2
-
-source("plotmap.R")
-col.map <- colorRampPalette(c('darkred','orange','yellow'),bias=2)(length(mu))
-plotmap(mu,x,bks=c(0,3),xlim=c(-2,2),ylim=c(-3,3),col.map=col.map)
 
 # y | ... ~ N(0,s^2 + K)
 prelim <- gp(y, x, s, C, D, cand_S=diag(3), init=rep(0,3), B=500, burn=500, printProg=T)
@@ -93,3 +88,10 @@ mu_pred <- C %*% solve(M) %*% ms
 plot(mu,lwd=3,col="grey",pch=20,ylim=c(-10,10))
 points(mu_pred,pch=20,ylim=range(mu))
 points(mu-mu_pred,pch=20,col="red")
+
+#Map Plots for testing######################
+source("plotmap.R")
+col.map <- colorRampPalette(c('darkred','orange','yellow'),bias=2)(length(mu))
+plotmap(mu,x,bks=c(0,3),xlim=c(-2,2),ylim=c(-3,3),col.map=col.map)
+
+
