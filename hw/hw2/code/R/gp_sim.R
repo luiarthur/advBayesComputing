@@ -38,7 +38,7 @@ D <- as.matrix(dist(s))^2
 # y | ... ~ N(0,s^2 + K)
 prelim <- gp(y, x, s, C, D, cand_S=diag(3), init=rep(0,3), B=500, burn=500, printProg=T)
 V <- cov( prelim$param )
-system.time( out <- gp(y, x, s, C, D, cand_S=V, init=tail(out$param,1), B=2000, burn=500, printProg=T) )
+system.time( out <- gp(y, x, s, C, D, cand_S=V, init=tail(prelim$param,1), B=2000, burn=500, printProg=T) )
 
 colnames(out$param) <- c("s2","phi","tau")
 par(mfrow=c(3,1))
