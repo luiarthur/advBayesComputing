@@ -1,7 +1,7 @@
 #!/bin/bash
 
 username="alui2" # Change this to your user name
-server="firedance"
+server="citrisdance"
 
 sftp $username@$server.soe.ucsc.edu <<EOF
   cd advBayesComputing/hw/hw2/code/R/output
