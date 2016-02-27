@@ -36,7 +36,7 @@ priors <- c(2,5,0,5,2,5) #s2, phi, tau
 #V <- round( cov(prelim$param) )
 #diag(V) <- ifelse(diag(V)<1,sign(diag(V)),diag(V))
 #system.time( out <- gp(y, x, s, C, D, cand_S=V, init=tail(prelim$param,1), B=3000, burn=5000, printProg=T) )
-system.time( out <- gp(y, x, s, C, D, cand_S=.01*diag(3), init=rep(0,3), B=3000, burn=5000, printProg=T) )
+system.time( out <- gp(y, x, s, C, D, cand_S=.01*diag(3), init=rep(0,3), priors=priors, B=3000, burn=5000, printProg=T) )
 
 save(out,file="output/out.RData")
 
