@@ -84,7 +84,6 @@ List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, vec init, vec priors, int
     if ( log_ratio > log(randu()) ) {
       param.row(b) = reshape(cand,1,num_params);
       if (b > burn) acc_rate++;
-      param(b,0) = log(.5);
     } else {
       param.row(b) = param.row(b-1);
     }
