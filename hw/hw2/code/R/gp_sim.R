@@ -48,15 +48,12 @@ par(mfrow=c(3,1))
 par(mfrow=c(1,1))
 
 out$acc_rate
-plot.post(out$param[,1],stay=T,main=expression(sigma^2))
-plot.post(out$param[,2],stay=T,main=expression(phi))
-plot.post(out$param[,3],stay=T,main=expression(tau))
+plot.posts(out$param,names=c("s2","phi","tau"))
 
 apply(out$param,2,mean)
 apply(out$param,2,sd)
 apply(out$param,2,quantile)
 
-plot.posts(out$param)
 
 onePred_mu_star <- function(param,o,retList=F) {
   phi <- param[2]
