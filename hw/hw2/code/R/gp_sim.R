@@ -56,6 +56,8 @@ apply(out$param,2,mean)
 apply(out$param,2,sd)
 apply(out$param,2,quantile)
 
+plot.posts(out$param)
+
 onePred_mu_star <- function(param,o,retList=F) {
   phi <- param[2]
   tau <- param[3]
@@ -84,6 +86,7 @@ onePred <- function(param,o) {
 #onePred(out$param[1,],out)
 
 system.time( preds <- t(apply(out$param,1,function(p) onePred(p,out))) )
+plot(apply(preds,2,mean),type='l',col="blue",lwd=2)
 
 plot(apply(preds,2,mean),type='l',ylim=c(-30,30),col="blue",lwd=2)
 lines(apply(preds,2,function(x)quantile(x,.025)),type='l',ylim=range(mu),col="blue",lwd=2)
