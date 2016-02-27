@@ -29,10 +29,22 @@ double wood_ldet(mat C, mat Ks, mat Ksi, mat Ct, double s2, int n) {
   return ldet_1 + ldet_2 + ldet_3;
 }
 
-double log_like(vec y, vec param, mat D, mat C, mat I) {
-  double s2 = exp(param[0]);
-  double phi = 5 / (exp(-param[1])+1);
-  double tau = exp(param[2]);
+
+double log_like_plus_log_prior(vec y, vec param, mat D, mat C, mat I, vec priors) {
+  double ls2 = param[0];
+  double w = param[1];
+  double ltau = param[2];
+
+  double a_s2 = priors[0];//2;
+  double b_s2 = priors[1];//5;
+  double a_phi = priors[2];//0;
+  double b_phi = priors[3];//5;
+  double a_tau = priors[4];//2;
+  double b_tau = priors[5];//5;
+
+  double s2 = exp(ls2);
+  double phi = (b_phi*exp(w)+a_phi) / (exp(w)+1);
+  double tau = exp(ltau);
 
   mat Ks = tau * exp(-phi*D);
   mat Ksi = Ks.i();
@@ -42,42 +54,33 @@ double log_like(vec y, vec param, mat D, mat C, mat I) {
   
   ldet = wood_ldet(C,Ks,Ksi,Ct,s2,n);
 
-  return (-.5 * ldet - .5 * y.t() * wood_inv(s2,I,C,Ct,Ksi) * y)[0];
-}
+  double log_prior = ( w-2*log(exp(w)+1) ) - a_s2*ls2 - b_s2*exp(-ls2) - a_tau*ltau - b_tau*exp(-ltau);
+  double log_like = (-.5 * ldet - .5 * y.t() * wood_inv(s2,I,C,Ct,Ksi) * y)[0];
 
-double log_prior(vec param) { // s2, phi, tau
-  double ls2 = param[0];
-  double w = param[1];
-  double ltau = param[2];
-
-  double a_s2 = 2;
-  double b_s2 = 5;
-  double a_phi = 0;
-  double b_phi = 5;
-  double a_tau = 2;
-  double b_tau = 5;
-
-  return ( w-2*log(exp(w)+1) ) - a_s2*ls2 - b_s2*exp(-ls2) - a_tau*ltau - b_tau*exp(-ltau);
+  return log_like + log_prior;
 }
 
 //[[Rcpp::export]]
-List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, vec init, int B, int burn, bool printProg) {
+List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, vec init, vec priors, int B, int burn, bool printProg) {
   int n = y.size();
   int num_params = cand_S.n_rows;
   mat In = eye<mat>(n,n);
   int acc_rate = 0;
   mat param = zeros<mat>(B+burn,num_params);
   double log_ratio;
-  vec cand;
+  vec cand,curr;
   List ret;
   clock_t start_time = clock();
   int freq = 50;
   param.row(0) = reshape(init,1,num_params);
 
   for (int b=1; b<B+burn; b++) {
-    cand = mvrnorm(vectorise(param.row(b-1)), cand_S); // s2, phi, tau
-    log_ratio = log_like(y, cand, D, C, In) + log_prior(cand) - 
-                log_like(y, vectorise(param.row(b-1)), D, C, In) - log_prior( vectorise(param.row(b-1)) );
+    curr = vectorise(param.row(b-1));
+    cand = mvrnorm(curr, cand_S); // s2, phi, tau
+
+    log_ratio = log_like_plus_log_prior(y,cand,D,C,In,priors) - 
+                log_like_plus_log_prior(y,curr,D,C,In,priors);
+
     if ( log_ratio > log(randu()) ) {
       param.row(b) = reshape(cand,1,num_params);
       if (b > burn) acc_rate++;
@@ -91,7 +94,7 @@ List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, vec init, int B, int burn
   Rcout << endl;
 
   param.col(0) = exp(param.col(0));
-  param.col(1) = (5*exp(param.col(1))+0) / ( exp(param.col(1))+1 );
+  param.col(1) = (priors[3]*exp(param.col(1))+priors[2]) / ( exp(param.col(1))+1 );
   param.col(2) = exp(param.col(2));
 
   ret["param"] = param.tail_rows(B);
