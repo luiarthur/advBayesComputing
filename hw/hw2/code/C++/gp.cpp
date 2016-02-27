@@ -77,7 +77,6 @@ List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, vec init, vec priors, int
   for (int b=1; b<B+burn; b++) {
     curr = vectorise(param.row(b-1));
     cand = mvrnorm(curr, cand_S); // s2, phi, tau
-    cand[0] = log(.5);
 
     log_ratio = log_like_plus_log_prior(y,cand,D,C,In,priors) - 
                 log_like_plus_log_prior(y,curr,D,C,In,priors);
@@ -85,6 +84,7 @@ List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, vec init, vec priors, int
     if ( log_ratio > log(randu()) ) {
       param.row(b) = reshape(cand,1,num_params);
       if (b > burn) acc_rate++;
+      param(b,0) = log(.5);
     } else {
       param.row(b) = param.row(b-1);
     }
