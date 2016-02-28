@@ -24,7 +24,7 @@ p <- 2
 x <- matrix(rnorm(n*p),n,p)     # data (simulated covariates)
 f <- function(xx) ifelse(xx[,1]-.5 > 0, xx[,1]-.5, 0) + xx[,2]^2
 mu <- f(x)
-s <- matrix(rnorm(sn*p),sn,p) # knots
+s <- matrix(runif(sn*p,range(x)[1],range(x)[2]),sn,p) # knots
 
 y <- rnorm(n,f(x),sqrt(sig2)) # data (simulated responses)
 C <- cov(t(x),t(s)) # covariance between data and knots
@@ -117,7 +117,6 @@ col.map.diff <- colorRampPalette(c('darkred','white','yellow'))(length(f(s)))
 par(mfrow=c(1,3))
   plotmap(mu,x,bks=c(-.1,3.1),xlim=c(-2,2),ylim=c(-3,3),col.map=col.map)
   plotmap(apply(preds,2,mean),bks=c(-.1,3.1),x,col.map=col.map,ylim=c(-3,3))
-  plotmap(apply(preds,2,mean),x,bks=c(-1.2,3.1),col.map=col.map,ylim=c(-3,3))
 par(mfrow=c(1,1))
 
 system.time( preds_ms <- t(apply(out$param,1,function(p) onePred_mu_star(p,out))) )
