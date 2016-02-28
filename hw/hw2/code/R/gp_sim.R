@@ -11,7 +11,7 @@ cat("Starting Main Program...\n")
 
 n <- 1000
 sig2 <- .5
-sn <- 100
+sn <- 300
 
 # ORIGINAL:
 #p <- 3
