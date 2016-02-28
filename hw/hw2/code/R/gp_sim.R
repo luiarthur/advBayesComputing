@@ -99,6 +99,7 @@ col.map <- colorRampPalette(c('darkred','orange','yellow'),bias=2)(length(mu))
 col.map.s <- colorRampPalette(c('darkred','orange','yellow'),bias=2)(length(f(s)))
 col.map.diff <- colorRampPalette(c('darkred','white','yellow'))(length(f(s)))
 
+plotmap(out$y,out$x,bks=c(0,1),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map,ylab="x2",xlab="x1"); abline(v=c(.5),col="grey")
 par(mfrow=c(1,3))
   plotmap(mu,x,bks=c(0,1),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map,ylab="x2",xlab="x1"); abline(v=c(.5),col="grey")
   plotmap(apply(preds,2,mean),bks=c(0,1),x,col.map=col.map,ylim=c(-3,3),xlim=c(-3,3))

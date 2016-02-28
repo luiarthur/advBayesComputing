@@ -99,6 +99,7 @@ List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, vec init, vec priors, int
 
   ret["param"] = param.tail_rows(B);
   ret["acc_rate"] = acc_rate * 1.0 / B;
+  ret["y"] = y;
   ret["x"] = x;
   ret["s"] = s;
   ret["C"] = C;
