@@ -110,7 +110,7 @@ plotmap(mu-apply(preds,2,mean),bks=c(0,1),x,col.map=col.map,ylim=c(-3,3),xlim=c(
 system.time( preds_ms <- t(apply(out$param,1,function(p) onePred_mu_star(p,out))) )
 par(mfrow=c(1,2))
                     plotmap(f(s),s,bks=c(0,3),xlim=c(-2,3),ylim=c(-3,3),col.map=col.map.s)
-  plotmap(apply(preds_ms,2,mean),s,bks=c(0,3),xlim=c(-2,3),ylim=c(-3,3),col.map=col.map.s)
+  plotmap(apply(preds_ms,1,mean),s,bks=c(0,3),xlim=c(-2,3),ylim=c(-3,3),col.map=col.map.s)
 par(mfrow=c(1,1))
 
 
