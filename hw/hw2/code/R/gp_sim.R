@@ -32,7 +32,7 @@ D <- as.matrix(dist(s))
 
 # y | ... ~ N(0,s^2 + K)
 priors <- c(2,.5,0,5,2,2) #s2, phi, tau
-system.time( out <- gp(y, x, s, C, D, cand_S=.01*diag(3), init=rep(0,3), priors=priors, B=3000, burn=5000, printProg=T) )
+system.time( out <- gp(y, x, s, C, D, cand_S=.01*diag(3), init=rep(0,3), priors=priors, B=3000, burn=10000, printProg=T) )
 
 save(out,file="output/out.RData")
 
