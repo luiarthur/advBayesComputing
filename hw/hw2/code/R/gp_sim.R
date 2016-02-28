@@ -22,7 +22,7 @@ sn <- 100
 # TESTING
 p <- 2
 x <- matrix(rnorm(n*p),n,p)     # data (simulated covariates)
-f <- function(xx) ifelse(xx[,1]-.5 > 0, xx[,1]-.5, 0) + xx[,2]^2
+f <- function(xx) ifelse(xx[,1]>.5, xx[,1]-.5, 0) + xx[,2]^2
 mu <- f(x)
 s <- matrix(runif(sn*p,range(x)[1],range(x)[2]),sn,p) # knots
 
@@ -32,10 +32,6 @@ D <- as.matrix(dist(s))
 
 # y | ... ~ N(0,s^2 + K)
 priors <- c(2,.5,0,5,2,2) #s2, phi, tau
-#prelim <- gp(y, x, s, C, D, cand_S=.01*diag(3), init=rep(0,3), priors=priors, B=500, burn=50, printProg=T)
-#V <- round( cov(prelim$param) )
-#diag(V) <- ifelse(diag(V)<1,sign(diag(V)),diag(V))
-#system.time( out <- gp(y, x, s, C, D, cand_S=V, init=tail(prelim$param,1), B=3000, burn=5000, printProg=T) )
 system.time( out <- gp(y, x, s, C, D, cand_S=.01*diag(3), init=rep(0,3), priors=priors, B=3000, burn=5000, printProg=T) )
 
 save(out,file="output/out.RData")
@@ -76,17 +72,8 @@ onePred_mu_star <- function(param,o,retList=F) {
 
 onePred <- function(param,o) {
   ms <- onePred_mu_star(param,o,T)
-  mu <- ms$Cs %*% solve(ms$Ks) %*% ms$mu_star
+  mu <- o$C %*% solve(ms$Ks) %*% ms$mu_star
   mu
-  #phi <- param[2]
-  #tau <- param[3]
-  #Cs <- o$C
-  #Ds <- o$D
-  #
-  #Ks <- tau * exp(-phi * Ds)
-  #n <- nrow(Cs)
-
-  #mvrnorm(rep(0,n), param[1] * diag(n)+ Cs%*%Ks %*% t(Cs))
 }
 
 #onePred(out$param[1,],out)
@@ -104,7 +91,7 @@ lines(mu,lwd=3,col='grey')
 M <- 3 * exp(-2*D) # yellow black, if 1.5 -> 2, black yellow
 M <- 1 * exp(-4*D) # yellow black, if 1.5 -> 2, black yellow
 ms <- mvrnorm(rep(0,ncol(M)), M)
-mu_pred <- C %*% solve(M) %*% ms
+mu_mle <- C %*% solve(M) %*% ms
 
 #Map Plots for testing######################
 source("plotmap.R")
@@ -113,10 +100,12 @@ col.map.s <- colorRampPalette(c('darkred','orange','yellow'),bias=2)(length(f(s)
 col.map.diff <- colorRampPalette(c('darkred','white','yellow'))(length(f(s)))
 
 par(mfrow=c(1,3))
-  plotmap(mu,x,bks=c(0,3),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map)
-  plotmap(apply(preds,2,mean),bks=c(0,3),x,col.map=col.map,ylim=c(-3,3),xlim=c(-3,3))
-  plotmap(mu_pred,x,bks=c(0,3),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map)
+  plotmap(mu,x,bks=c(0,1),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map,ylab="x2",xlab="x1"); abline(v=c(.5),col="grey")
+  plotmap(apply(preds,2,mean),bks=c(0,1),x,col.map=col.map,ylim=c(-3,3),xlim=c(-3,3))
+  plotmap(mu_mle,x,bks=c(0,1),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map)
 par(mfrow=c(1,1))
+plotmap(mu-apply(preds,2,mean),bks=c(0,1),x,col.map=col.map,ylim=c(-3,3),xlim=c(-3,3))
+
 
 system.time( preds_ms <- t(apply(out$param,1,function(p) onePred_mu_star(p,out))) )
 par(mfrow=c(1,2))
@@ -133,3 +122,11 @@ par(mfrow=c(1,1))
 #lines(x2,apply(X2,2,mean),col="blue",lwd=2)
 #lines(x2,apply(X2,2,function(x) mean(x) + sd(x)),col="blue",lwd=1)
 #lines(x2,apply(X2,2,function(x) mean(x) - sd(x)),col="blue",lwd=1)
+
+#x1 <- seq(-1,2,length.out=100)
+#x2 <- seq(-1,2,length.out=100)
+#z <- outer(ifelse(x1>.5,x1-.5,0),x2^2,`+`)
+#par(mfrow=c(1,2))
+#  persp(x1,x2,z,theta=90,phi=15)
+#  persp(x1,x2,z,theta=180,phi=15)
+#par(mfrow=c(1,1))
