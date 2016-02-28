@@ -31,7 +31,7 @@ C <- cov(t(x),t(s)) # covariance between data and knots
 D <- as.matrix(dist(s))
 
 # y | ... ~ N(0,s^2 + K)
-priors <- c(2,.5,0,5,2,5) #s2, phi, tau
+priors <- c(2,.5,0,5,2,2) #s2, phi, tau
 #prelim <- gp(y, x, s, C, D, cand_S=.01*diag(3), init=rep(0,3), priors=priors, B=500, burn=50, printProg=T)
 #V <- round( cov(prelim$param) )
 #diag(V) <- ifelse(diag(V)<1,sign(diag(V)),diag(V))
@@ -101,28 +101,27 @@ lines(mu,lwd=3,col='grey')
 
 
 ### MLE?
-M <- 3 * exp(-3*D)
+M <- 3 * exp(-2*D) # yellow black, if 1.5 -> 2, black yellow
+M <- 1 * exp(-4*D) # yellow black, if 1.5 -> 2, black yellow
 ms <- mvrnorm(rep(0,ncol(M)), M)
 mu_pred <- C %*% solve(M) %*% ms
-
-plot(mu,lwd=3,col="grey",pch=20,ylim=c(-10,10))
-points(mu_pred,pch=20,ylim=range(mu))
-points(mu-mu_pred,pch=20,col="red")
 
 #Map Plots for testing######################
 source("plotmap.R")
 col.map <- colorRampPalette(c('darkred','orange','yellow'),bias=2)(length(mu))
 col.map.s <- colorRampPalette(c('darkred','orange','yellow'),bias=2)(length(f(s)))
 col.map.diff <- colorRampPalette(c('darkred','white','yellow'))(length(f(s)))
+
 par(mfrow=c(1,3))
-  plotmap(mu,x,bks=c(-.1,3.1),xlim=c(-2,2),ylim=c(-3,3),col.map=col.map)
-  plotmap(apply(preds,2,mean),bks=c(-.1,3.1),x,col.map=col.map,ylim=c(-3,3))
+  plotmap(mu,x,bks=c(0,3),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map)
+  plotmap(apply(preds,2,mean),bks=c(0,3),x,col.map=col.map,ylim=c(-3,3),xlim=c(-3,3))
+  plotmap(mu_pred,x,bks=c(0,3),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map)
 par(mfrow=c(1,1))
 
 system.time( preds_ms <- t(apply(out$param,1,function(p) onePred_mu_star(p,out))) )
 par(mfrow=c(1,2))
-  plotmap(f(s),s,bks=c(0,3),xlim=c(-2,3),ylim=c(-3,3),col.map=col.map.s)
-  plotmap(apply(preds_ms,2,mean),s,bks=c(-2,3),xlim=c(-2,2),ylim=c(-3,3),col.map=col.map.s)
+                    plotmap(f(s),s,bks=c(0,3),xlim=c(-2,3),ylim=c(-3,3),col.map=col.map.s)
+  plotmap(apply(preds_ms,2,mean),s,bks=c(0,3),xlim=c(-2,3),ylim=c(-3,3),col.map=col.map.s)
 par(mfrow=c(1,1))
 
 
