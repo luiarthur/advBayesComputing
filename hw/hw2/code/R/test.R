@@ -32,7 +32,9 @@ tuning <- list("phi"=.01,"sigma.sq"=.01,"tau.sq"=.01)
 out <- spLM(y~1,coords=x,knots=s,cov.model="exponential",n.samples=12000,priors=priors,starting=starting,tuning=tuning,verbose=T,modified.pp=F)
 
 
+apply(as.matrix(out$p.theta.samples),2,mean) # 16, .5, .12
 plot.posts(as.matrix(out$p.theta.samples))
+plot.post(as.matrix(out$p.beta),stay=T)
 m1 <- spRecover(out,start=10001,verbose=TRUE)
 preds <- m1$p.w.recover.samples
 
