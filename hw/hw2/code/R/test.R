@@ -4,11 +4,9 @@ source("plotmap.R")
 source("../../../../R_Functions/plotPost.R",chdir=T)
 library(spBayes)
 
-spLM
-
 n <- 1000
 sig2 <- .5
-sn <- 300
+sn <- 30
 
 # TESTING
 p <- 2
@@ -33,18 +31,19 @@ out <- spLM(y~1,coords=x,knots=s,cov.model="exponential",n.samples=12000,priors=
 
 
 apply(as.matrix(out$p.theta.samples),2,mean) # 16, .5, .12
-plot.posts(as.matrix(out$p.theta.samples))
-plot.post(as.matrix(out$p.beta),stay=T)
+plot.posts(tail(as.matrix(out$p.theta.samples),2000)) # scaling for cov, decay, obs var
+plot.post(tail(as.matrix(out$p.beta),2000),stay=T)
 m1 <- spRecover(out,start=10001,verbose=TRUE)
 preds <- m1$p.w.recover.samples
 
-col.map <- colorRampPalette(c('darkred','orange','yellow'),bias=2)(length(mu))
-col.diff <- colorRampPalette(c('darkblue','white','darkred'))(length(mu))
+#col.map <- colorRampPalette(c('darkred','orange','yellow'),bias=2)(length(mu))
+col.map <- colorRampPalette(c('white','yellow','gold','orange','darkred'),bias=2)(length(mu))
+col.diff <- colorRampPalette(c('darkblue','lightblue','white','yellow','darkred'))(length(mu))
 
 par(mfrow=c(2,2))
-  plotmap(f(m1$coords),m1$coords, bks=c(0,1),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map,ylab="x2",xlab="x1"); abline(v=c(.5),col="grey")
-  plotmap(apply(preds,1,mean),m1$coords, bks=c(0,1),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map,ylab="x2",xlab="x1"); abline(v=c(.5),col="grey")
-  plotmap(f(m1$coords)-apply(preds,1,mean),m1$coords, bks=c(-1,1)*.2,xlim=c(-3,3),ylim=c(-3,3),col.map=col.diff,ylab="x2",xlab="x1"); abline(v=c(.5),col="grey")
-  plotmap(apply(preds,1,sd),m1$coords, bks=c(0,1),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map,ylab="x2",xlab="x1"); abline(v=c(.5),col="grey")
+  plotmap(f(m1$coords),m1$coords, bks=c(0,2),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map,ylab="x2",xlab="x1"); abline(v=c(.5),col="grey")
+  plotmap(apply(preds,1,mean),m1$coords, bks=c(0,2),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map,ylab="x2",xlab="x1"); abline(v=c(.5),col="grey")
+  plotmap(f(m1$coords)-apply(preds,1,mean),m1$coords, bks=c(-1,1)*.5,xlim=c(-3,3),ylim=c(-3,3),col.map=col.diff,ylab="x2",xlab="x1"); abline(v=c(.5),col="grey")
+  plotmap(apply(preds,1,sd),m1$coords, bks=c(0,2),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map,ylab="x2",xlab="x1"); abline(v=c(.5),col="grey")
 par(mfrow=c(1,1))
 
