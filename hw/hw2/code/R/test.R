@@ -52,25 +52,31 @@ par(mfrow=c(1,1))
 # How do I get wStar??? ######################
 Cd <- matrix(0,n,sn)
 Ds <- as.matrix(dist(s))
-onePred_mu_star <- function(m,i) {
+onePred_mu_star <- function(m,i,burn=10000) {
   param <- m$p.theta.samples
 
-  phi <- param[i,3]
-  tau <- param[i,1]
+  phi <- param[i+burn,3]
+  tau <- param[i+burn,1]
+  s2 <- param[i+burn,2]
 
   Ks <- tau * exp(-phi * Ds)
-  ks <- ncol(Ks)
+  Ks.i <- solve(Ks)
+  H <- Cd %*% Ks.i
+  Ht <- t(H)
+  J <- ncol(Ks)
 
-  mu_star <- mvrnorm(1,rep(0,ks), Ks)
+  S <- solve( Ks.i + Ht%*%H / s2 )
+  m <- S %*% Ht %*% y / s2
+
+  #mu_star <- mvrnorm(1,rep(0,J), Ks)
+  mu_star <- mvrnorm(1,m,S)
+
   mu_star
 }
-onePred_mu_star(m1,1000)
-m1$p.theta.samples[1000,]
 
-R <- apply(matrix(10001:12000),1,function(i) onePred_mu_star(m1,i))
+
+onePred_mu_star(m1,1)
+
+R <- apply(matrix(1:2000),1,function(i) onePred_mu_star(m1,i,burn=10000))
 plot(apply(m1$p.wStr,1,mean),col="blue",pch=20)
-points(apply(R[,1500:2000],1,mean),pch=20)
-points(f(s),pch=20,col="red")
-points(mvrnorm(1, rep(0,30) , param[1] * exp ( - param[3] * D )), pch=20,col="green")
-
-param <- apply(tail(m1$p.theta.samples,500),2,mean)
+points(apply(R,1,mean),pch=20,col="red")
