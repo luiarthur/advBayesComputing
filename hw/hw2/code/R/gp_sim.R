@@ -76,6 +76,17 @@ onePred <- function(param,o) {
   ms <- onePred_mu_star(param,o,T)
   mu <- ms$Cs %*% solve(ms$Ks) %*% ms$mu_star
   mu
+  #phi <- param[2]
+  #tau <- param[3]
+
+  #Cs <- tau * exp(-phi * o$Cd)
+  #Ds <- o$D
+  #
+  #Ks <- tau * exp(-phi * Ds)
+  #ks <- ncol(Ks)
+  #nn <- length(o$y)
+  #
+  #mu_star <- mvrnorm(rep(0,nn), Cs %*% solve(Ks) %*% t(Cs))
 }
 
 #onePred(out$param[1,],out)
