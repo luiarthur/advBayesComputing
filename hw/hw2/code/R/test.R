@@ -67,7 +67,10 @@ onePred_mu_star <- function(m,i) {
 onePred_mu_star(m1,1000)
 m1$p.theta.samples[1000,]
 
-R <- apply(matrix(1:2000),1,function(i) onePred_mu_star(m1,i))
+R <- apply(matrix(10001:12000),1,function(i) onePred_mu_star(m1,i))
 plot(apply(m1$p.wStr,1,mean),col="blue",pch=20)
 points(apply(R[,1500:2000],1,mean),pch=20)
+points(f(s),pch=20,col="red")
+points(mvrnorm(1, rep(0,30) , param[1] * exp ( - param[3] * D )), pch=20,col="green")
 
+param <- apply(tail(m1$p.theta.samples,500),2,mean)
