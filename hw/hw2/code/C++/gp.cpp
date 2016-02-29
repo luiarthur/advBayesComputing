@@ -30,7 +30,7 @@ double wood_ldet(mat C, mat Ks, mat Ksi, mat Ct, double s2, int n) {
 }
 
 
-double log_like_plus_log_prior(vec y, vec param, mat D, mat C, mat I, vec priors) {
+double log_like_plus_log_prior(vec y, vec param, mat D, mat Cd, mat I, vec priors) {
   double ls2 = param[0];
   double w = param[1];
   double ltau = param[2];
@@ -48,7 +48,10 @@ double log_like_plus_log_prior(vec y, vec param, mat D, mat C, mat I, vec priors
 
   mat Ks = tau * exp(-phi*D);
   mat Ksi = Ks.i();
+
+  mat C = tau * exp(-phi*Cd);
   mat Ct = C.t();
+
   int n = I.n_rows;
   double ldet;
   
@@ -61,7 +64,7 @@ double log_like_plus_log_prior(vec y, vec param, mat D, mat C, mat I, vec priors
 }
 
 //[[Rcpp::export]]
-List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, vec init, vec priors, int B, int burn, bool printProg) {
+List gp(vec y, mat x, mat s, mat Cd, mat D, mat cand_S, vec init, vec priors, int B, int burn, bool printProg) {
   int n = y.size();
   int num_params = cand_S.n_rows;
   mat In = eye<mat>(n,n);
@@ -78,8 +81,8 @@ List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, vec init, vec priors, int
     curr = vectorise(param.row(b-1));
     cand = mvrnorm(curr, cand_S); // s2, phi, tau
 
-    log_ratio = log_like_plus_log_prior(y,cand,D,C,In,priors) - 
-                log_like_plus_log_prior(y,curr,D,C,In,priors);
+    log_ratio = log_like_plus_log_prior(y,cand,D,Cd,In,priors) - 
+                log_like_plus_log_prior(y,curr,D,Cd,In,priors);
 
     if ( log_ratio > log(randu()) ) {
       param.row(b) = reshape(cand,1,num_params);
@@ -102,7 +105,7 @@ List gp(vec y, mat x, mat s, mat C, mat D, mat cand_S, vec init, vec priors, int
   ret["y"] = y;
   ret["x"] = x;
   ret["s"] = s;
-  ret["C"] = C;
+  ret["Cd"] = Cd;
   ret["D"] = D;
   ret["cand_S"] = cand_S;
 

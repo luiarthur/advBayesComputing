@@ -11,7 +11,7 @@ cat("Starting Main Program...\n")
 
 n <- 1000
 sig2 <- .5
-sn <- 300
+sn <- 30
 
 # ORIGINAL:
 #p <- 3
@@ -25,14 +25,15 @@ x <- matrix(rnorm(n*p),n,p)     # data (simulated covariates)
 f <- function(xx) ifelse(xx[,1]>.5, xx[,1]-.5, 0) + xx[,2]^2
 mu <- f(x)
 s <- matrix(runif(sn*p,range(x)[1],range(x)[2]),sn,p) # knots
-
 y <- rnorm(n,f(x),sqrt(sig2)) # data (simulated responses)
-C <- cov(t(x),t(s)) # covariance between data and knots
+
 D <- as.matrix(dist(s))
+Cd <- matrix(0,n,sn)
+for (i in 1:n) for (j in 1:sn) Cd[i,j] <- sqrt(sum((x[i,] - s[j,])^2))
 
 # y | ... ~ N(0,s^2 + K)
-priors <- c(2,.5,  4.9,5.1,  2,2) #s2, phi, tau
-system.time( out <- gp(y, x, s, C, D, cand_S=.01*diag(3), init=rep(0,3), priors=priors, B=3000, burn=15000, printProg=T) )
+priors <- c(2,.5,  0,5,  2,2) #s2, phi, tau
+system.time( out <- gp(y, x, s, Cd, D, cand_S=.01*diag(3), init=rep(0,3), priors=priors, B=2000, burn=500, printProg=T) )
 
 save(out,file="output/out.RData")
 
@@ -54,7 +55,8 @@ apply(out$param,2,quantile)
 onePred_mu_star <- function(param,o,retList=F) {
   phi <- param[2]
   tau <- param[3]
-  Cs <- o$C
+
+  Cs <- tau * exp(-phi * o$Cd)
   Ds <- o$D
   
   Ks <- tau * exp(-phi * Ds)
@@ -72,7 +74,7 @@ onePred_mu_star <- function(param,o,retList=F) {
 
 onePred <- function(param,o) {
   ms <- onePred_mu_star(param,o,T)
-  mu <- o$C %*% solve(ms$Ks) %*% ms$mu_star
+  mu <- ms$Cs %*% solve(ms$Ks) %*% ms$mu_star
   mu
 }
 
@@ -86,26 +88,20 @@ lines(apply(preds,2,function(x)quantile(x,.025)),type='l',ylim=range(mu),col="bl
 lines(apply(preds,2,function(x)quantile(x,.975)),type='l',ylim=range(mu),col="blue",lwd=2)
 lines(mu,lwd=3,col='grey')
 
-
-### MLE?
-M <- 3 * exp(-2*D) # yellow black, if 1.5 -> 2, black yellow
-M <- 1 * exp(-4*D) # yellow black, if 1.5 -> 2, black yellow
-ms <- mvrnorm(rep(0,ncol(M)), M)
-mu_mle <- C %*% solve(M) %*% ms
-
 #Map Plots for testing######################
 source("plotmap.R")
-col.map <- colorRampPalette(c('darkred','orange','yellow'),bias=2)(length(mu))
-col.map.s <- colorRampPalette(c('darkred','orange','yellow'),bias=2)(length(f(out$s)))
-col.map.diff <- colorRampPalette(c('darkred','white','yellow'))(length(f(out$s)))
+col.map <- colorRampPalette(c('white','yellow','gold','orange','darkred'),bias=2)(n)
+col.map.s <- colorRampPalette(c('darkred','orange','yellow'),bias=2)(sn)
+col.diff <- colorRampPalette(c('darkblue','lightblue','white','yellow','darkred'))(n)
 
-plotmap(out$y,out$x,bks=c(0,1),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map,ylab="x2",xlab="x1"); abline(v=c(.5),col="grey")
-par(mfrow=c(1,3))
-  plotmap(mu,out$x,bks=c(0,1),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map,ylab="x2",xlab="x1"); abline(v=c(.5),col="grey")
-  plotmap(apply(preds,2,mean),bks=c(0,1),out$x,col.map=col.map,ylim=c(-3,3),xlim=c(-3,3)); abline(a=0,b=1)
-  plotmap(mu_mle,out$x,bks=c(0,1),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map)
+
+par(mfrow=c(2,2))
+  plotmap(f(out$x),out$x, bks=c(0,2),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map,ylab="x2",xlab="x1"); abline(v=c(.5),col="grey")
+  plotmap(apply(preds,2,mean),out$x, bks=c(0,2),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map,ylab="x2",xlab="x1"); abline(v=c(.5),col="grey")
+  plotmap(f(out$x)-apply(preds,2,mean),out$x, bks=c(-1,1)*.5,xlim=c(-3,3),ylim=c(-3,3),col.map=col.diff,ylab="x2",xlab="x1"); abline(v=c(.5),col="grey")
+  plotmap(apply(preds,2,sd),out$x, bks=c(0,2),xlim=c(-3,3),ylim=c(-3,3),col.map=col.map,ylab="x2",xlab="x1"); abline(v=c(.5),col="grey")
 par(mfrow=c(1,1))
-plotmap(mu-apply(preds,2,mean),bks=c(0,1),x,col.map=col.map,ylim=c(-3,3),xlim=c(-3,3))
+
 
 
 system.time( preds_ms <- t(apply(out$param,1,function(p) onePred_mu_star(p,out))) )
