@@ -16,8 +16,10 @@ mu <- f(x)
 s <- matrix(runif(sn*p,range(x)[1],range(x)[2]),sn,p) # knots
 
 y <- rnorm(n,f(x),sqrt(sig2)) # data (simulated responses)
-C <- cov(t(x),t(s)) # covariance between data and knots
+
 D <- as.matrix(dist(s))
+Cd <- matrix(0,n,sn) # distance between data and knots
+for (i in 1:n) for (j in 1:sn) Cd[i,j] <- sqrt(sum((x[i,] - s[j,])^2))
 
 # y | ... ~ N(0,s^2 + K)
 #priors <- c(2,.5,  4.9,5.1,  2,2) #s2, phi, tau
@@ -50,33 +52,27 @@ par(mfrow=c(1,1))
 
 
 # How do I get wStar??? ######################
-Cd <- matrix(0,n,sn)
-Ds <- as.matrix(dist(s))
-onePred_mu_star <- function(m,i,burn=10000) {
-  param <- m$p.theta.samples
+onePred_mu_star <- function(param) {
+  tau <- param[1]
+  s2  <- param[2]
+  phi <- param[3]
 
-  phi <- param[i+burn,3]
-  tau <- param[i+burn,1]
-  s2 <- param[i+burn,2]
-
-  Ks <- tau * exp(-phi * Ds)
+  Ks <- tau * exp(-phi * D)
   Ks.i <- solve(Ks)
-  H <- Cd %*% Ks.i
+  C <- tau * exp(-phi * Cd)
+  H <- C %*% Ks.i
   Ht <- t(H)
-  J <- ncol(Ks)
 
-  S <- solve( Ks.i + Ht%*%H / s2 )
-  m <- S %*% Ht %*% y / s2
+  S.i <- solve( Ks.i + Ht%*%H / s2 )
+  m <- S.i %*% Ht %*% y / s2
 
-  #mu_star <- mvrnorm(1,rep(0,J), Ks)
-  mu_star <- mvrnorm(1,m,S)
-
+  mu_star <- mvrnorm(1,m,S.i)
   mu_star
 }
 
+R <- apply(as.matrix(m1$p.theta.recover.samples),1,function(param) onePred_mu_star(param))
 
-onePred_mu_star(m1,1)
+onePred_mu_star(m1$p.theta.recover.samples[3,])
 
-R <- apply(matrix(1:2000),1,function(i) onePred_mu_star(m1,i,burn=10000))
-plot(apply(m1$p.wStr,1,mean),col="blue",pch=20)
+plot(apply(m1$p.wStr,1,mean),col="blue",pch=20,cex=2)
 points(apply(R,1,mean),pch=20,col="red")
