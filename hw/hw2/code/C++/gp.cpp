@@ -14,25 +14,19 @@ void time_remain(clock_t start_time, int it, int total_its, int freq) {
   }
 }
 
-//mat wood_inv(double s2, mat I, mat C, mat Ct, mat Ksi) {
-//  mat out = I/s2 - C/s2* (Ksi + Ct*C / s2).i() * Ct/s2;
-//  return out;
-//}
 mat wood_inv(double s2, mat I, mat C, mat Ct, mat Ks) {
   mat out = I/s2 - C/s2* (Ks + Ct*C / s2).i() * Ct/s2;
   return out;
 }
 
-double wood_ldet(mat C, mat Ks, mat Ksi, mat Ct, double s2, int n) {
+double wood_ldet(mat C, mat Ks, mat Ct, double s2, int n) {
   double ldet_1,ldet_2, ldet_3, sign;
 
-  //log_det(ldet_1,sign, Ksi + Ct*C/s2);
-  //log_det(ldet_2,sign, Ks);
   log_det(ldet_1,sign, Ks + Ct*C/s2);
-  log_det(ldet_2,sign, Ksi);
+  log_det(ldet_2,sign, Ks);
   ldet_3 = n*log(s2);
 
-  return ldet_1 + ldet_2 + ldet_3;
+  return ldet_1 - ldet_2 + ldet_3;
 }
 
 
@@ -53,7 +47,6 @@ double log_like_plus_log_prior(vec y, vec param, mat D, mat Cd, mat I, vec prior
   double tau = exp(ltau);
 
   mat Ks = tau * exp(-phi*D);
-  mat Ksi = Ks.i();
 
   mat C = tau * exp(-phi*Cd);
   mat Ct = C.t();
@@ -61,10 +54,9 @@ double log_like_plus_log_prior(vec y, vec param, mat D, mat Cd, mat I, vec prior
   int n = I.n_rows;
   double ldet;
   
-  ldet = wood_ldet(C,Ks,Ksi,Ct,s2,n);
+  ldet = wood_ldet(C,Ks,Ct,s2,n);
 
   double log_prior = ( w-2*log(exp(w)+1) ) - a_s2*ls2 - b_s2*exp(-ls2) - a_tau*ltau - b_tau*exp(-ltau);
-  //double log_like = (-.5 * ldet - .5 * y.t() * wood_inv(s2,I,C,Ct,Ksi) * y)[0];
   double log_like = (-.5 * ldet - .5 * y.t() * wood_inv(s2,I,C,Ct,Ks) * y)[0];
 
   return log_like + log_prior;
