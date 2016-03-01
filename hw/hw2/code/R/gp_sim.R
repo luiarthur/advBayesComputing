@@ -95,11 +95,6 @@ apply(preds[,ord],1,function(r) points(r,type='p',ylim=c(-3,6),col=rgb(.1,.1,.1,
 lines(apply(preds,2,mean)[ord],ylim=c(-3,6),col="blue")
 lines(mu[ord],col='green',lwd=3)
 
-plot(apply(preds,2,mean)[ord],type='l',ylim=c(-3,6),col="blue")
-lines(apply(preds,2,function(x)quantile(x,.025))[ord],ylim=range(mu),col="black")
-lines(apply(preds,2,function(x)quantile(x,.975))[ord],ylim=range(mu),col="black")
-lines(mu[ord],col='grey')
-
 plot(mu[ord] - apply(preds,2,mean)[ord])
 
 
