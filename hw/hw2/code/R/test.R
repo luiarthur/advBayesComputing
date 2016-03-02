@@ -24,7 +24,7 @@ for (i in 1:n) for (j in 1:sn) Cd[i,j] <- sqrt(sum((x[i,] - s[j,])^2))
 # y | ... ~ N(0,s^2 + K)
 #priors <- c(2,.5,  4.9,5.1,  2,2) #s2, phi, tau
 priors <- list("sigma.sq.IG"=c(2,2), # the scaling for the covariance matrix. 
-               "phi.Unif"=c(0.1,5),  # decay parameter
+               "phi.Unif"=c(.01,5),  # decay parameter
                "tau.sq.IG"=c(2,.5),  # the variance between observations. Should be .5
                "beta.norm"=list(0,.00001))
 starting <- list("phi"=1,"sigma.sq"=1,"tau.sq"=1)

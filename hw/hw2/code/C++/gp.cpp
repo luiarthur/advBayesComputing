@@ -29,7 +29,6 @@ double wood_ldet(mat C, mat Ks, mat Ct, double s2, int n) {
   return ldet_1 - ldet_2 + ldet_3;
 }
 
-
 double log_like_plus_log_prior(vec y, vec param, mat D, mat Cd, mat I, vec priors) {
   double ls2 = param[0];
   double w = param[1];
@@ -43,11 +42,10 @@ double log_like_plus_log_prior(vec y, vec param, mat D, mat Cd, mat I, vec prior
   double b_tau = priors[5];//5;
 
   double s2 = exp(ls2);
-  double phi = (b_phi*exp(w)+a_phi) / (exp(w)+1);
+  double phi = (b_phi*exp(w) + a_phi) / (exp(w)+1);
   double tau = exp(ltau);
 
   mat Ks = tau * exp(-phi*D);
-
   mat C = tau * exp(-phi*Cd);
   mat Ct = C.t();
 
@@ -56,7 +54,7 @@ double log_like_plus_log_prior(vec y, vec param, mat D, mat Cd, mat I, vec prior
   
   ldet = wood_ldet(C,Ks,Ct,s2,n);
 
-  double log_prior = ( w-2*log(exp(w)+1) ) - a_s2*ls2 - b_s2*exp(-ls2) - a_tau*ltau - b_tau*exp(-ltau);
+  double log_prior = ( w-2*log(exp(w)+1) ) - a_s2*ls2 - b_s2/s2 - a_tau*ltau - b_tau/tau;
   double log_like = (-.5 * ldet - .5 * y.t() * wood_inv(s2,I,C,Ct,Ks) * y)[0];
 
   return log_like + log_prior;

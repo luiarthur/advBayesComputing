@@ -11,7 +11,7 @@ cat("Starting Main Program...\n")
 
 n <- 1000
 sig2 <- .5
-sn <- 30
+sn <- 50
 
 # ORIGINAL:
 p <- 3
@@ -19,7 +19,8 @@ x <- matrix(rnorm(n*p),n,p)     # data (simulated covariates)
 f <- function(xx) x[,1] + ifelse(xx[,2]>.5, xx[,2]-.5, 0) + xx[,3]^2
 mu <- f(x)
 ord <- order(mu)
-s <- matrix(rnorm(sn*p),sn,p) # knots
+s <- matrix(runif(sn*p,range(x)[1],range(x)[2]),sn,p) # knots
+#s <- matrix(rnorm(sn*p),sn,p) # knots
 
 # TESTING
 #p <- 2
@@ -35,8 +36,8 @@ Cd <- matrix(0,n,sn)
 for (i in 1:n) for (j in 1:sn) Cd[i,j] <- sqrt(sum((x[i,] - s[j,])^2))
 
 # y | ... ~ N(0,s^2 + K)
-priors <- c(2,.5,  0,5,  2,2) #s2, phi, tau
-system.time( out <- gp(y, x, s, Cd, D, cand_S=.01*diag(3), init=rep(0,3), priors=priors, B=300, burn=300, printProg=T) )
+priors <- c(2,.5,  .1,3,  2,2) #s2, phi, tau
+system.time( out <- gp(y, x, s, Cd, D, cand_S=diag(3)*.01, init=rep(0,3), priors=priors, B=300, burn=400, printProg=T) )
 
 save(out,file="output/out.RData")
 
@@ -95,7 +96,7 @@ apply(preds[,ord],1,function(r) points(r,type='p',ylim=c(-3,6),col=rgb(.1,.1,.1,
 lines(apply(preds,2,mean)[ord],ylim=c(-3,6),col="blue")
 lines(mu[ord],col='green',lwd=3)
 
-plot(mu[ord] - apply(preds,2,mean)[ord])
+plot(mu - apply(preds,2,mean))
 
 
 #Map Plots for testing######################
