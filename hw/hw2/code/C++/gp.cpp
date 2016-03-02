@@ -96,7 +96,6 @@ List gp(vec y, mat x, mat s, mat Cd, mat D, mat cand_S, vec init, vec priors, in
   Rcout << endl;
 
   param.col(0) = exp(param.col(0));
-  ret["phi_pre"] = param.col(1);
   param.col(1) = (priors[3]*exp(param.col(1))+priors[2]) / ( exp(param.col(1))+1 );
   param.col(2) = exp(param.col(2));
 

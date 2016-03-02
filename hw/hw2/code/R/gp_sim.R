@@ -36,7 +36,7 @@ for (i in 1:n) for (j in 1:sn) Cd[i,j] <- sqrt(sum((x[i,] - s[j,])^2))
 
 # y | ... ~ N(0,s^2 + K)
 priors <- c(2,.5,  0,5,  2,2) #s2, phi, tau
-system.time( out <- gp(y, x, s, Cd, D, cand_S=.01*diag(3), init=rep(0,3), priors=priors, B=2000, burn=10000, printProg=T) )
+system.time( out <- gp(y, x, s, Cd, D, cand_S=.01*diag(3), init=rep(0,3), priors=priors, B=300, burn=300, printProg=T) )
 
 save(out,file="output/out.RData")
 
