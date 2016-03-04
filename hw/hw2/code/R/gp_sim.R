@@ -49,7 +49,7 @@ par(mfrow=c(3,1))
 par(mfrow=c(1,1))
 
 out$acc_rate
-plot.posts(out$param,names=c("s2","phi","tau"))
+plot.posts(out$param,names=c(expression(sigma^2),expression(phi),expression(tau^2)),cex.a=1.5,cex.legend=1.2)
 
 
 apply(out$param,2,mean)
@@ -98,6 +98,15 @@ lines(mu[ord],col='green',lwd=3)
 
 plot(mu - apply(preds,2,mean))
 
+source("plotmap.R")
+col.map <- colorRampPalette(c("blue","purple","red"))(n)
+preds.mean <- apply(preds,2,mean)
+par(mfrow=c(2,2))
+  plotmap3d(x[,3],x[,2],x[,1],xlab="x3",ylab="x2",zlab="x1",clim.map=c(-.9,2),pch=20,cex=1,theta=90,phi=20,col.map=col.map,clab=expression(hat(mu)),val=preds.mean)
+  plotmap3d(x[,3],x[,2],x[,1],xlab="x3",ylab="x2",zlab="x1",clim.map=c(-.9,2),pch=20,cex=1,theta=90,phi=20,col.map=col.map,clab=expression(mu),val=mu)
+  plotmap3d(x[,3],x[,2],x[,1],xlab="x3",ylab="x2",zlab="x1",clim.map=c(-.9,2),pch=20,cex=1,theta=90,phi=20,col.map=col.map,clab=expression(mu-hat(mu)),val=mu-preds.mean)
+  plotmap3d(x[,3],x[,2],x[,1],xlab="x3",ylab="x2",zlab="x1",clim.map=c(-.9,2),pch=20,cex=1,theta=90,phi=20,col.map=col.map,clab=expression(sd(hat(mu))),val=apply(preds,2,sd))
+par(mfrow=c(1,1))
 
 #Map Plots for testing######################
 #source("plotmap.R")
