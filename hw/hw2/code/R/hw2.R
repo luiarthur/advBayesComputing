@@ -7,11 +7,12 @@ library(Rcpp)
 Sys.setenv("PKG_CXXFLAGS"="-std=c++11") # enable c++11, for RcppArmadillo
 sourceCpp("../../../../cpp_functions/func.cpp")
 sourceCpp("../C++/albertChib.cpp")
+sourceCpp("../C++/smc.cpp")
 system("mkdir -p output")
 "%bw%" <- function(x,rng) x<rng[2] & x>rng[1]
 
-n <- 5000
-p <- 400
+n <- 1000
+p <- 10#400
 
 system.time( X <- t(sapply(1:n,function(x) mvrnorm(rep(0,p),diag(p))))) #54s
 beta <- c(1.3, 4, -1, 1.6, 5, -2, rep(0,p-6))
@@ -46,5 +47,10 @@ plot.coverage(b.post,pch=20,col="grey",cex=2,ylab="",xlab=expression(beta))
 
 # SMC idk...
 sourceCpp("../C++/smc.cpp")
+N <- 500
+out_2 <- update_smc(y=y, x=X, N=N, beta=matrix(rnorm(N*p),N,p), printProg=TRUE)
+plot(beta,pch=20,col="grey",cex=3)
+lines(apply(out_2,2,mean),col='blue',lwd=3)
+#update_smc(y, X[,1:3], diag(3), 10, 4, F)
 #update_smc(y, X[,1:3], diag(3), 10, 4, F)
 
