@@ -49,7 +49,9 @@ par(mfrow=c(3,1))
 par(mfrow=c(1,1))
 
 out$acc_rate
-plot.posts(out$param,names=c(expression(sigma^2),expression(phi),expression(tau^2)),cex.a=1.5,cex.legend=1.2)
+pdf("output/gpPost.pdf",w=13,h=9)
+  plot.posts(out$param,names=c(expression(sigma^2),expression(phi),expression(tau^2)),cex.a=1.5,cex.legend=1)
+dev.off()
 
 
 apply(out$param,2,mean)
