@@ -88,25 +88,34 @@ onePred <- function(param,o) {
 }
 
 system.time( preds <- t(apply(out$param,1,function(p) onePred(p,out))) )
-plot(apply(preds,2,mean)[ord],type='l',col="blue",lwd=2)
-lines(mu[ord],col="grey",lwd=2)
 
-plot(0,cex=0,ylim=c(-3,6),xlim=c(1,n))
-apply(preds[,ord],1,function(r) points(r,type='p',ylim=c(-3,6),col=rgb(.1,.1,.1,.1),cex=.1))
-lines(apply(preds,2,mean)[ord],ylim=c(-3,6),col="blue")
-lines(mu[ord],col='green',lwd=3)
+# mu^ and mu in 1-D
+plot(apply(preds,2,mean)[ord],type='l',col="blue",lwd=.5,bty="n",ylab=expression(mu),xlab="Ordered Data")
+lines(mu[ord],col="black",lwd=3)
 
-plot(mu - apply(preds,2,mean))
+# Residuals
+plot((mu - apply(preds,2,mean))[ord],pch=20,main=expression(mu-hat(mu)),ylab="Residuals",xlab="Ordered Data")
 
 source("plotmap.R")
-col.map <- colorRampPalette(c("blue","purple","red"))(n)
+rmse_map <- function(X,x_true) {
+  rmse <- function(x,x_true) {
+    sqrt(sum((x-x_true)^2)/length(x))
+  }
+  apply(matrix(1:ncol(X)),1,function(i) rmse(X[,i],x_true[i]))
+}
+
+col.map <- colorRampPalette(c("blue","grey90","red"))(n)
 preds.mean <- apply(preds,2,mean)
+
 par(mfrow=c(2,2))
-  plotmap3d(x[,3],x[,2],x[,1],xlab="x3",ylab="x2",zlab="x1",clim.map=c(-.9,2),pch=20,cex=1,theta=90,phi=20,col.map=col.map,clab=expression(hat(mu)),val=preds.mean)
-  plotmap3d(x[,3],x[,2],x[,1],xlab="x3",ylab="x2",zlab="x1",clim.map=c(-.9,2),pch=20,cex=1,theta=90,phi=20,col.map=col.map,clab=expression(mu),val=mu)
-  plotmap3d(x[,3],x[,2],x[,1],xlab="x3",ylab="x2",zlab="x1",clim.map=c(-.9,2),pch=20,cex=1,theta=90,phi=20,col.map=col.map,clab=expression(mu-hat(mu)),val=mu-preds.mean)
-  plotmap3d(x[,3],x[,2],x[,1],xlab="x3",ylab="x2",zlab="x1",clim.map=c(-.9,2),pch=20,cex=1,theta=90,phi=20,col.map=col.map,clab=expression(sd(hat(mu))),val=apply(preds,2,sd))
+  plotmap3d(x[,3],x[,2],x[,1],xlab="x3",ylab="x2",zlab="x1",clim.map=c(-.9,2),pch=20,cex=1,theta=45,phi=20,col.map=col.map,clab=expression(hat(mu)),val=preds.mean)
+  plotmap3d(x[,3],x[,2],x[,1],xlab="x3",ylab="x2",zlab="x1",clim.map=c(-.9,2),pch=20,cex=1,theta=45,phi=20,col.map=col.map,clab=expression(mu),val=mu)
+  plotmap3d(x[,3],x[,2],x[,1],xlab="x3",ylab="x2",zlab="x1",clim.map=c(-.9,2),pch=20,cex=1,theta=45,phi=20,col.map=col.map,clab=expression(E~"["~(hat(mu)-mu)^2~"|"~mu~"]"),val=rmse_map(preds,mu))
+  plotmap3d(x[,3],x[,2],x[,1],xlab="x3",ylab="x2",zlab="x1",clim.map=c(-.9,2),pch=20,cex=1,theta=45,phi=20,col.map=col.map,clab=expression(sd(hat(mu))),val=apply(preds,2,sd))
 par(mfrow=c(1,1))
+
+
+
 
 #Map Plots for testing######################
 #source("plotmap.R")
