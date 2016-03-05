@@ -33,3 +33,7 @@ The coverage for the non-zero coefficients is 0. That is, they never contain the
 The SMC performs poorly at recovering the true model with $p=400$. Only one sample is produced in the sampler. The average length of the credible intervals is 0, and the coverage is 0.
 
 # Predictive Process
+
+![Ordered Data](../code/R/output/gpOrderedData.pdf)
+![Residuals](../code/R/output/gpResid.pdf)
+![An awesome 3D plot](../code/R/output/plot3d.pdf)
