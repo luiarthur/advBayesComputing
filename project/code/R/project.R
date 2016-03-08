@@ -26,7 +26,7 @@ dat2 <- sim_dat(f3.2,p=500,n=100)
 priors <- c(2,1,    .1,5,    2,5,    1,1) #s2, phi, tau, d_vec
 cat("sourcing gp_gdp.cpp...\n"); sourceCpp("../C++/gp_gdp.cpp")
 out2 <- gp_gdp(y=dat2$y, X=dat2$x, cand_S=diag(3+dat2$p)*1e-9,
-               init=rep(0,3+dat2$p), priors=priors, B=2, burn=1, printProg=TRUE)
+               init=rep(0,3+dat2$p), priors=priors, B=2000, burn=100000, printProg=TRUE)
 save(out2,file="output/out2.RData")
 load("output/out2.RData")
 
