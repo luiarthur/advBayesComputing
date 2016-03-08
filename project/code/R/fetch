@@ -1,0 +1,11 @@
+#!/bin/bash
+
+username="alui2" # Change this to your user name
+server="citrisdance"
+
+sftp $username@$server.soe.ucsc.edu <<EOF
+  cd advBayesComputing/project/code/R/output
+  get out2.RData
+EOF
+
+mv out2.RData output/out2.RData
