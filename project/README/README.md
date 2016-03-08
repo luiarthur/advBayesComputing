@@ -29,7 +29,7 @@ $$
   d_1,...,d_p &\sim GDP(a,b)\\
 \end{aligned}
 $$
-with covariance function $\kappa(x_1,x_2) = \tau \exp\p{\phi(x_1-x_2)'D(x_1-x_2)}$, $K_{ij} = \kappa(x_i,x_j)$ and where 
+with covariance function $\kappa(x_1,x_2) = \tau \exp\p{-\phi(x_1-x_2)'D(x_1-x_2)}$, $K_{ij} = \kappa(x_i,x_j)$ and where 
 $$
 D =
 \begin{pmatrix}
