@@ -39,7 +39,7 @@ double log_like_plus_log_prior(vec y, vec param, mat D, mat I, vec priors) {
   double ldet_K,sign;
   mat s2I_plus_K = s2*I + K;
 
-  ldet_K = log_det(ldet_K,sign, s2I_plus_K);
+  log_det(ldet_K, sign, s2I_plus_K);
   
   double log_prior = ( w-2*log(exp(w)+1) ) - a_s2*ls2 - b_s2/s2 - a_tau*ltau - b_tau/tau;
   double log_like = (-.5 * ldet_K - .5 * y.t() * s2I_plus_K.i() * y)[0];
