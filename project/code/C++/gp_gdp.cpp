@@ -43,7 +43,8 @@ double log_like_plus_log_prior(vec y, mat X, vec param, mat I, vec priors) {
   double w = param[1];
   double ltau = param[2];
   vec d_vec = param.tail( param.size()-3 );
-  mat D_mat = xDx(X,d_vec);
+  //mat D_mat = xDx(X,d_vec);
+  mat D_mat = xDx(X,d_vec % d_vec); //check this.
 
   double a_s2 = priors[0];//2;
   double b_s2 = priors[1];//5;
