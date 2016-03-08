@@ -19,9 +19,9 @@ priors <- c(5,5,  .1,5,  .1,.1) #s2, phi, tau
 out <- gp(y=dat$y, x=dat$x, D=dat$D, cand_S=diag(dat$p)*.1,
           init=rep(1,3), priors=priors, B=2000, burn=4000, printProg=TRUE)
 colnames(out$param) <- c("s2","phi","tau")
-plot.posts(out$param,cex.l=1.3,cex.a=1,names=colnames(out$param))
-plot(ts(out$param))
-apply(out$param,2,summary)
+#plot.posts(out$param,cex.l=1.3,cex.a=1,names=colnames(out$param))
+#plot(ts(out$param))
+#apply(out$param,2,summary)
 
 
 ### p = 500
@@ -34,7 +34,7 @@ out2 <- gp_gdp(y=dat2$y, X=dat2$x, cand_S=diag(3+dat2$p)*1e-9,
                #init=rep(0,3+dat2$p), priors=priors, B=2000, burn=100000, printProg=TRUE)
 save(out2,file="output/out2.RData")
 load("output/out2.RData")
-plot(ts(out2$param))
+#plot(ts(out2$param))
 
 
 #plot.posts(out2$param[,1:3],cex.l=1.3,cex.a=1)
