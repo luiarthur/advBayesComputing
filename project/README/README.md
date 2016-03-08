@@ -40,5 +40,5 @@ D =
 \end{pmatrix}
 $$.
 
-The density for the GDP($a,b$) is $f(x;a,b) = \frac{1}{2b}\p{1 + \frac{\abs{x}}{ab}}^{-a+1}$
+The density for the GDP($a,b$) is $f(x;a,b) = \frac{1}{2b}\p{1 + \frac{\abs{x}}{ab}}^{-a-1}$
 
