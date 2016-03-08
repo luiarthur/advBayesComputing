@@ -28,7 +28,7 @@ mat xDx (mat x, vec d) {
     for (int j=0; j<=i; j++) {
       for (int k=0; k<p; k++) {
         diff_ij = x(i,k) - x(j,k);
-        G(i,j) = G(i,j) + diff_ij*diff_ij * d[k];
+        G(i,j) = G(i,j) + diff_ij*diff_ij * d[k]*d[k];
       }
       G(i,j) = sqrt( G(i,j) );
       if (i != j) G(j,i) = G(i,j);
@@ -44,7 +44,7 @@ double log_like_plus_log_prior(vec y, mat X, vec param, mat I, vec priors) {
   double ltau = param[2];
   vec d_vec = param.tail( param.size()-3 );
   //mat D_mat = xDx(X,d_vec);
-  mat D_mat = xDx(X,d_vec % d_vec); //check this.
+  mat D_mat = xDx(X,d_vec); //check this.
 
   double a_s2 = priors[0];//2;
   double b_s2 = priors[1];//5;
