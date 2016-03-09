@@ -29,16 +29,8 @@ $$
   d_1,...,d_p &\sim GDP(a,b)\\
 \end{aligned}
 $$
-with covariance function $\kappa(x_1,x_2) = \tau \exp\p{-\phi(x_1-x_2)'D(x_1-x_2)}$, $K_{ij} = \kappa(x_i,x_j)$ and where 
-$$
-D =
-\begin{pmatrix}
-  d_1 & 0 & \cdots & 0 \\
-  0  & d_2 & \cdots & 0 \\
-  \vdots  & \vdots & \ddots &  \vdots\\
-  0  &  0 & \cdots & d_p
-\end{pmatrix}
-$$.
+with $K_{ij} = \kappa(x_i,x_j)$, covariance function $\kappa(x_i,x_j) = \tau \exp\p{-\phi\sqrt{\sum_{k=1}^p (x_{ik}-x_{jk})^2 d_k^2}}$.
+
 
 The density for the GDP($a,b$) is $f(x;a,b) = \frac{1}{2b}\p{1 + \frac{\abs{x}}{ab}}^{-a-1}$
 

@@ -21,12 +21,16 @@ out <- gp(y=dat$y, x=dat$x, D=dat$D, cand_S=diag(dat$p)*.1,
 colnames(out$param) <- c("s2","phi","tau")
 
 ### p = 500
-f3.2 <- function(X) apply(as.matrix(X),1, function(x) 10*x[1] + 15*sin(x[2]) + 10*x[3]^2)
-dat2 <- sim_dat(f3.2,p=100,n=100)
+# p=10,cand_S=.01
+# p=10,cand_S=.01
+# p=10,cand_S=.01
+f3.2 <- function(X) apply(as.matrix(X),1, function(x) -5*x[1] + sin(x[2]) + x[3]^2)
+f3.2 <- function(X) apply(as.matrix(X),1, function(x) -2*x[1] + 5*sin(x[2]) + 3*(x[3])^2)
+dat2 <- sim_dat(f3.2,p=10,n=100)
 priors <- c(2,1,    .1,5,    2,5,    1,1) #s2, phi, tau, d_vec
 cat("sourcing gp_gdp.cpp...\n"); sourceCpp("../C++/gp_gdp.cpp")
-out2 <- gp_gdp(y=dat2$y, X=dat2$x, cand_S=diag(3+dat2$p)*.01,
-               init=rep(0,3+dat2$p), priors=priors, B=2000, burn=3000, printProg=TRUE)
+out2 <- gp_gdp(y=dat2$y, X=dat2$x, cand_S=diag(c(rep(.1,3),rep(1e-3,dat2$p))),
+               init=c(rep(0,3),rep(1,dat2$p)), priors=priors, B=2000, burn=2000, printProg=TRUE)
 save(out2,file="output/out2.RData")
 load("output/out2.RData")
 
@@ -44,4 +48,7 @@ out2$acc_rate
 plot(ts(out2$param[,1:10]))
 plot(ts(out2$param[,4:13]))
 plot.posts(out2$param[,1:3],cex.l=1.3,cex.a=1)
-plot( apply(out2$param[,-c(1:3)],2,mean ) ,col=c(rep("red",3),rep("grey",dat2$p)),pch=20,cex=2)
+d_vec <- t(apply(out2$param[,-c(1:3)],1,function(x) x / sum(x)))
+plot( apply(d_vec,2,mean) ,col=c(rep("red",3),rep("grey",dat2$p)),pch=20,cex=5)
+add.errbar(t(apply(d_vec,2,function(x) quantile(x,c(.025,.975)))),lwd=4,col="black")
+

@@ -7,3 +7,9 @@ sim_dat <- function(f,p,n,m=round(sqrt(n)),s2=.5) { # function, num of covariate
   list("y"=y,"f"=f,"x"=x,"D"=as.matrix(dist(x)),"s"=s,"p"=p,"s2"=s2)
 }
 
+# Plotting Functions
+add.errbar <- function(ci,...) {
+  x <- 1:nrow(ci)
+  segments(x,ci[,1],x,ci[,2],...)
+}
+
