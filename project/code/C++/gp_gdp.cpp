@@ -28,7 +28,7 @@ mat xDx (mat x, vec d) {
     for (int j=0; j<=i; j++) {
       for (int k=0; k<p; k++) {
         diff_ij = x(i,k) - x(j,k);
-        G(i,j) = G(i,j) + diff_ij*diff_ij*d[k]*d[k];
+        G(i,j) = G(i,j) + diff_ij*diff_ij*d[k];
       }
       G(i,j) = sqrt( G(i,j) );
       if (i != j) G(j,i) = G(i,j);
@@ -43,8 +43,9 @@ double log_like_plus_log_prior(vec y, mat X, vec param, mat I, vec priors) {
   double w = param[1];
   double ltau = param[2];
   vec d_vec = param.tail( param.size()-3 );
-  mat D_mat = xDx(X,d_vec);
-  //mat D_mat = xDx(X,d_vec/sum(d_vec)); //check this.
+  vec d2 = d_vec % d_vec;
+  mat D_mat = xDx(X,d2); // ORIGINAL and best so far
+  //mat D_mat = xDx(X,d2/sum(d2));
 
   double a_s2 = priors[0];//2;
   double b_s2 = priors[1];//5;
@@ -94,7 +95,6 @@ List gp_gdp(vec y, mat X, mat cand_S, vec init, vec priors, int B, int burn, boo
     // Update s2, phi, tau:
     curr = vectorise(param.row(b-1));
     cand = mvrnorm(curr, cand_S); // s2, phi, tau, d1,...,dp
-    //cand.tail(num_params-3) = abs(cand.tail(num_params-3));
 
     log_ratio = log_like_plus_log_prior(y,X,cand,In,priors) - 
                 log_like_plus_log_prior(y,X,curr,In,priors);

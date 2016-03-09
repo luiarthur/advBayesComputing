@@ -1,5 +1,5 @@
-sim_dat <- function(f,p,n,m=round(sqrt(n)),s2=.5) { # function, num of covariates, num of observations
-  x <- matrix(rnorm(n*p),n,p)
+sim_dat <- function(f,p,n,m=round(sqrt(n)),s2=.5,v=1) { # function, num of covariates, num of observations
+  x <- matrix(rnorm(n*p,0,v),n,p)
   y <- f(x) + rnorm(n,0,sqrt(s2))
 
   s <- matrix(rnorm(m*p),m,p)

@@ -1,0 +1,267 @@
+\documentclass[mathserif,t]{beamer}
+%\usepackage{Sweave}                                                       
+%http://tex.stackexchange.com/questions/105613/footer-in-beamer. Check this out. Frankfurt template.
+%http://tex.stackexchange.com/questions/39345/piecewise-highlighting-in-beamer-presentation
+%https://joerglenhard.wordpress.com/2011/08/01/beamer-customization-colors/
+\usepackage{amssymb,bm,mathtools,amsmath}                                                      
+\usepackage{graphicx,caption,float}
+\usepackage[UKenglish]{isodate} % for: \today                             
+\cleanlookdateon                % for: \today                             
+
+\def\wl{\par\vspace{\baselineskip}\noindent}                             
+\def\beginmyfig{\begin{figure}[ht]\begin{center}}                          
+\def\endmyfig{\end{center}\end{figure}}                                   
+
+\def\prodl#1#2#3{\prod\limits_{#1=#2}^{#3}}                               
+\def\suml#1#2#3{\sum\limits_{#1=#2}^{#3}}                                 
+\def\ds{\displaystyle}                                                    
+\def\tbf#1{\textbf{#1}}
+\def\inv{^{\raisebox{.2ex}{$\scriptscriptstyle-1$}}}
+\def\pm{^{\raisebox{.2ex}{$\scriptscriptstyle\prime$}}}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand{\p}[1]{\left(#1\right)}
+\newcommand{\bk}[1]{\left[#1\right]}
+\newcommand{\bc}[1]{ \left\{#1\right\} }
+\newcommand{\abs}[1]{ \left|#1\right| }
+\newcommand{\mat}{ \begin{pmatrix} }
+\newcommand{\tam}{ \end{pmatrix} }
+
+
+% My Beamer Stuff
+  \geometry{vmargin=0.3in} % Formating the top bar
+  \newcommand{\m}[1]{\mathbf{\bm{#1}}} % Serif bold math
+
+  % My Color Stuff
+  \usepackage{xcolor} % http://en.wikibooks.org/wiki/LaTeX/Colors
+                      % http://latexcolor.com/
+    \definecolor{grey}{rgb}{0.15, 0.15, 0.15} % Sets default color. CHANGE THIS!
+    \definecolor{pumpkin}{rgb}{1.0, 0.46, 0.09}
+    \definecolor{darktan}{rgb}{1.0, 0.66, 0.07}
+    \definecolor{coral}{rgb}{1.0, 0.5, 0.31}
+    \definecolor{burlywood}{rgb}{0.98, 0.82 0.6}
+    \pagecolor{grey}% Sets the bar color.
+
+  \def\mylitecolor{pumpkin}         % Bullet Color.       CHANGE THIS!
+  \def\mycolor{\color{pumpkin}}     % Frame Title Color.  CHANGE THIS!
+  \def\mydarkcolor{\color{pumpkin}} % Figure Color.       CHANGE THIS!
+    \def\frametitle#1{\vspace{-.32in{\mycolor\textbf{\Large#1}}}}
+    \setbeamercolor{itemize item}{fg=\mylitecolor}
+    \setbeamercolor{enumerate item}{fg=\mylitecolor}
+    \setbeamercolor{itemize subitem}{fg=\mylitecolor}
+    \setbeamercolor{itemize subsubitem}{fg=\mylitecolor}
+    \setbeamercolor{title}{fg=\mylitecolor}
+    \setbeamercolor{footlinecolor}{bg=black!93,fg=\mylitecolor}
+    \setbeamercolor{author}{fg=burlywood}
+    \setbeamercolor{date}{fg=burlywood}
+    \setbeamercolor{institute}{fg=burlywood}
+
+    \usepackage[T1]{fontenc}
+    \DeclareCaptionFont{figcol}{\mydarkcolor} %color of the word Figure: in figure captions
+    \captionsetup{
+      font=scriptsize,
+      labelfont={bf,figcol,scriptsize}%,textfont={black}
+    }
+  \def\hline{ \textcolor{grey}{\hrulefill}\\ }
+
+  % Beamer Footer Stuff:
+  %http://tex.stackexchange.com/questions/26476/add-footer-text-to-all-slides-in-beamer
+  %http://tex.stackexchange.com/questions/105613/footer-in-beamer
+  \beamertemplatenavigationsymbolsempty
+  \setbeamertemplate{footline}{
+    \hbox{
+      \hspace{-.17cm}
+      \begin{beamercolorbox}[ht=2mm,dp=8.2mm,leftskip=.3cm,rightskip=.3cm]{footlinecolor}%
+        \insertauthor\hfill\insertshorttitle\hfill\insertframenumber/\inserttotalframenumber
+      \end{beamercolorbox}
+    }
+  }
+
+%%%%% Example for embedding images: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%\frame{
+%%%  \frametitle{How to embed images:}
+%%%  \beginmyfig
+%%%    \includegraphics[scale=.21]{path/to/file.pdf}
+%%%    \caption{Put Caption Here}
+%%%  \endmyfig
+%%%  \footnote{\tiny \url{https://www.luiarthur.github.com} }
+%%%}
+% End of Header. Start below beamer below. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% defs for this assignment:
+
+\begin{document}
+% My Title: {
+  \def\mytitle{\textbf{Gaussian Process and Variable Selection using Generalized Double Pareto Prior}}
+  \title[GP GDP]{\mytitle}
+  \author[Arthur Lui]{Arthur Lui}
+  \institute{
+    AMS\\
+    UC Santa Cruz
+  }
+  {
+    \setbeamercolor{background canvas}{bg=grey}
+    \frame{\titlepage}
+  }
+%}
+
+\frame{ %
+  \frametitle{Gaussian Process Model}
+  \vspace{5mm}
+  \[
+    \begin{array}{rclcl}
+      y&|&f(X) &= &f(X) + \epsilon,~\epsilon \sim N(0,\sigma^2I)\\
+      f(X)&|&\bm\theta &\sim& GP(0,\kappa(\cdot,\cdot))\\
+          &&\bm\theta &\sim& p(\bm\theta)\\
+      \\
+      \Rightarrow y&|&\bm\theta &\sim& N(0,\sigma^2I + K) \\
+                   &&\bm\theta &\sim& p(\bm\theta)\\
+  \end{array}
+  \]
+  \vspace{5mm}
+
+  where $\bm\theta = (\sigma^2,\phi,\tau)$, $K_{ij} = \kappa(x_i,x_j)$, and covariance function 
+  \[
+    \kappa(x_i,x_j) = \tau \exp\bc{-\phi\sqrt{\sum_{k=1}^p (x_{ik}-x_{jk})^2}}.
+  \]
+}
+
+\frame{ %
+  \frametitle{Gaussian Process Model with GDP Prior}
+  \vspace{5mm}
+  \[
+    \begin{array}{rclcl}
+      y&|&f(X) &= &f(X) + \epsilon,~\epsilon \sim N(0,\sigma^2I)\\
+      f(X)&|&\bm\theta &\sim& GP(0,\kappa(\cdot,\cdot))\\
+          &&\bm\theta &\sim& p(\bm\theta)\\
+      \\
+      \Rightarrow y&|&\bm\theta &\sim& N(0,\sigma^2I + K) \\
+                   &&\bm\theta &\sim& p(\bm\theta)\\
+                   &&p(d_k) &=&  \frac{1}{2b}\p{1 + \frac{\abs{d_k}}{ab}}^{-a-1}\\
+  \end{array}
+  \]
+  \vspace{5mm}
+
+  where $\bm\theta = (\sigma^2,\phi,\tau)$, $K_{ij} = \kappa(x_i,x_j)$, and covariance function 
+  \[
+    \kappa(x_i,x_j) = \tau \exp\bc{-\phi\sqrt{\sum_{k=1}^p (x_{ik}-x_{jk})^2{d_k}^2}}.
+  \]
+}
+
+\frame{ %
+  \frametitle{Gaussian Process Model with GDP Prior}
+  \vspace{5mm}
+  \[
+    \begin{array}{rclcl}
+      y&|&f(X) &= &f(X) + \epsilon,~\epsilon \sim N(0,\sigma^2I)\\
+      f(X)&|&\bm\theta &\sim& GP(0,\kappa(\cdot,\cdot))\\
+          &&\bm\theta &\sim& p(\bm\theta)\\
+      \\
+      \Rightarrow y&|&\bm\theta &\sim& N(0,\sigma^2I + K) \\
+                   &&\bm\theta &\sim& p(\bm\theta)\\
+                   &&p(d_k) &=&  \frac{1}{2b}\p{1 + \frac{\abs{d_k}}{ab}}^{-a-1}\\
+  \end{array}
+  \]
+  \vspace{5mm}
+
+  where $\bm\theta = (\sigma^2,\phi,\tau)$, $K_{ij} = \kappa(x_i,x_j)$, and covariance function 
+  \[
+    \kappa(x_i,x_j) = \tau \exp\bc{-\phi\sqrt{\sum_{k=1}^p (x_{ik}-x_{jk})^2\frac{{d_k}^2}{\sum_{l=1}^p{d_l}^2} }}.
+  \]
+}
+
+
+\frame{ \frametitle{Generating Data} 
+  \vspace{15mm}
+  Generate $x_{ik} \sim N(0,1)$, $~~~~i=1,\dots,100$, $k=1,\cdots,10$
+  \vspace{5mm}
+  \[
+  \begin{array}{cccccccccc}
+    \vspace{5mm}
+    y_i &=& &-.2x_{i1} &+& \sin(x_{i2})  &+& .3{x_{i3}}^2 &+& \epsilon_i\\
+    \vspace{5mm}
+    y_i &=& &x_{i1}    &+& \sin(5x_{i2}) &+& \sin(x_{i3}) &+& \epsilon_i\\
+    \vspace{5mm}
+    y_i &=& &3x_{i1}   &-& .3x_{i2}      &+& x_{i3}       &+& \epsilon_i\\
+  \end{array}
+  \]
+  where $\epsilon_i \sim N(0,\sigma^2=.5)$.
+}
+
+%1
+\frame{ \frametitle{Posterior for $\sigma^2,\phi,\tau$} 
+  \beginmyfig 
+    \includegraphics[scale=.3]{../code/R/output/post1.pdf} 
+    \caption{$f(\bm x) = -.2x_1 + \sin(x_2) + .3{x_3}^2$}
+  \endmyfig 
+}
+\frame{ \frametitle{Trace Plots for $d_1,\cdots,d_p$} 
+  \beginmyfig 
+    \includegraphics[scale=.3]{../code/R/output/trace1.pdf} 
+    \caption{$f(\bm x) = -.2x_1 + \sin(x_2) + .3{x_3}^2$}
+  \endmyfig 
+}
+\frame{ \frametitle{Posterior for $d_1,\cdots,d_p$} 
+  \beginmyfig 
+    \includegraphics[scale=.3]{../code/R/output/d1.pdf} 
+    \caption{$f(\bm x) = -.2x_1 + \sin(x_2) + .3{x_3}^2$}
+  \endmyfig 
+}
+
+%2
+\frame{ \frametitle{Posterior for $d_1,\cdots,d_p$} 
+  \beginmyfig 
+    \includegraphics[scale=.3]{../code/R/output/d2.pdf} 
+    \caption{$f(\bm x) = x_{i1} + \sin(5x_{i2}) + \sin(x_{i3})$}
+  \endmyfig 
+}
+
+%3
+\frame{ \frametitle{Posterior for $d_1,\cdots,d_p$} 
+  \beginmyfig 
+    \includegraphics[scale=.3]{../code/R/output/d3.pdf} 
+    \caption{$f(\bm x) = 3x_{i1} - .3x_{i2} + x_{i3} $}
+  \endmyfig 
+}
+
+
+% End Frame:
+{\setbeamercolor{background canvas}{bg=grey}
+  \frame{
+    \frametitle{}
+    \vspace{25mm}
+    \begin{center}
+      \color{pumpkin}\Huge \textbf{Questions}
+    \end{center} 
+  }
+}
+%2
+\frame{ \frametitle{Posterior for $\sigma^2,\phi,\tau$} 
+  \beginmyfig 
+    \includegraphics[scale=.3]{../code/R/output/post2.pdf} 
+    \caption{$f(\bm x) = -.2x_1 + \sin(x_2) + .3{x_3}^2$}
+  \endmyfig 
+}
+\frame{ \frametitle{Trace Plots for $d_1,\cdots,d_p$} 
+  \beginmyfig 
+    \includegraphics[scale=.3]{../code/R/output/trace2.pdf} 
+    \caption{$f(\bm x) = -.2x_1 + \sin(x_2) + .3{x_3}^2$}
+  \endmyfig 
+}
+%3
+\frame{ \frametitle{Posterior for $\sigma^2,\phi,\tau$} 
+  \beginmyfig 
+    \includegraphics[scale=.3]{../code/R/output/post3.pdf} 
+    \caption{$f(\bm x) = -.2x_1 + \sin(x_2) + .3{x_3}^2$}
+  \endmyfig 
+}
+\frame{ \frametitle{Trace Plots for $d_1,\cdots,d_p$} 
+  \beginmyfig 
+    \includegraphics[scale=.3]{../code/R/output/trace3.pdf} 
+    \caption{$f(\bm x) = -.2x_1 + \sin(x_2) + .3{x_3}^2$}
+  \endmyfig 
+}
+
+
+\end{document}
+% To compile:
+%  $ pdflatex *.tex; pdflatex *.tex
