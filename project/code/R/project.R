@@ -40,7 +40,7 @@ one_sim <- function(d,B=2000,burn=2000) {
 
 plot_d <- function(o,...) {
   d_vec <- t(apply(o$param[,-c(1:3)],1,function(x) x / sum(x)))
-  plot( apply(d_vec,2,mean) ,col=c(rep("red",3),rep("grey",dat2$p)),pch=20,cex=5,ylab="d",...)
+  plot( apply(d_vec,2,mean) ,col=c(rep("red",3),rep("grey",dat$p)),pch=20,cex=5,ylab="d",...)
   add.errbar(t(apply(d_vec,2,function(x) quantile(x,c(.025,.975)))),lwd=4,col="black");abline(h=0,lty=2)
 }
 
