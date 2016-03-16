@@ -40,7 +40,7 @@ one_sim <- function(d,B=2000,burn=2000) {
 
 plot_d <- function(o,...) {
   d_vec <- t(apply(o$param[,-c(1:3)],1,function(x) x / sum(x)))
-  plot( apply(d_vec,2,mean) ,col=c(rep("red",3),rep("grey",dat$p)),pch=20,cex=5,ylab="d",...)
+  plot( apply(d_vec,2,mean) ,col=c(rep("red",3),rep("grey",ncol(d_vec))),pch=20,cex=5,ylab="d",...)
   add.errbar(t(apply(d_vec,2,function(x) quantile(x,c(.025,.975)))),lwd=4,col="black");abline(h=0,lty=2)
 }
 
@@ -63,4 +63,31 @@ for (i in 1:3) {
 pdf(paste0("output/d",2,".pdf"),w=13,h=9)
   plot_d(out[[2]],ylim=c(-100,100),cex.axis=2)
 dev.off()
+
+### Prediction
+source("../../../R_Functions/colorUnderCurve.R",chdir=T)
+cat("sourcing gp_gdp.cpp...\n"); sourceCpp("../C++/gp_gdp.cpp")
+preds <- lapply(out,function(o) pred_gp_gdp(o$X,o$y,o$param,TRUE))
+
+plot_gp_pred <- function(p,o,i,...) {
+  mu <- o[[i]]$y#fn[[i]](o[[i]]$X)
+  ord <- order(mu)
+
+  ci <- t(apply(p[[i]],2,function(x) quantile(x,c(.025,.975)))[,ord])
+  plot(mu[ord],cex=.001,...)
+  color.btwn(1:100,ci[,1],ci[,2],from=0,to=100,col.area="lightblue")
+  lines(apply(p[[i]],2,mean)[ord],lwd=2,col="blue")
+  points(mu[ord],pch=20)
+  points(mu[ord],pch=20)
+  legend("topleft",legend=c("True Mean Function","95% Credible Interval","Posterior Mean Function"),bty="n",col=c("black","lightblue","blue"),
+         pch=c(20,NA,NA),lwd=c(NA,3,3))
+}
+
+
+for (i in 1:3) {
+pdf(paste0("output/pred",i,".pdf"),w=13,h=9)
+  plot_gp_pred(preds,out,i,ylab="",xlab="",ylim=c(-2.5,2.5),main=expression(hat(y)))
+dev.off()
+}
+
 

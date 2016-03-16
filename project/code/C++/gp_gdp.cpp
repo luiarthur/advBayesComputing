@@ -18,6 +18,7 @@ void time_remain(clock_t start_time, int it, int total_its, int freq) {
   }
 }
 
+//[[Rcpp::export]]
 mat xDx (mat x, vec d) {
   int p = x.n_cols;
   int n = x.n_rows;
@@ -125,4 +126,43 @@ List gp_gdp(vec y, mat X, mat cand_S, vec init, vec priors, int B, int burn, boo
   ret["cand_S"] = cand_S;
 
   return ret;
+}
+
+//[[Rcpp::export]]
+mat one_pred_gp_gdp(mat X, vec y, mat param_row) {
+  vec param = vectorise(param_row);
+
+  double s2 = param[0];
+  double phi = param[1];
+  double tau = param[2];
+
+  vec d = param.tail(param.size()-3);
+  int n = X.n_rows;
+
+  mat XdX = xDx(X,d % d);
+  mat K = tau * exp(-phi*XdX);
+
+  mat Xt = X.t();
+  mat I = eye(n,n);
+
+  mat S_i = (K.i() + I / s2).i();
+  vec mu = S_i*y / s2;
+
+  vec pred_y = mvrnorm(mu,S_i);
+
+  return reshape(pred_y,1,n);
+}
+
+//[[Rcpp::export]]
+mat pred_gp_gdp(mat X, vec y, mat param, bool printProg) {
+  int n = X.n_rows;
+  int B = param.n_rows;
+  mat preds = zeros<mat>(B,n);
+  
+  for (int i=0; i<B; i++) {
+    preds.row(i) = one_pred_gp_gdp(X, y , param.row(i));
+    if (printProg) Rcout << "\rProgress: " << i << "/" << B <<"   ";
+  }
+
+  return preds;
 }
