@@ -1,0 +1,239 @@
+% To compile: pdflatex file.tex
+\documentclass[11pt]{article}
+\usepackage{parskip} % Disable auto indentations
+\usepackage{fullpage}
+\usepackage{pgffor}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{mathtools}
+\usepackage{verbatim}
+\usepackage{appendix}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{subfig}
+\usepackage{url} % for underscore in footnote
+\usepackage[UKenglish]{isodate} % for: \today
+\cleanlookdateon                % for: \today
+\usepackage{natbib} % Can remove if no bibliography. bibtex
+%\pagestyle{empty} % Removes page number. Graphs too big.
+
+\def\wl{\par \vspace{\baselineskip}\noindent}
+% Keeping Figures in the right place %%%%%%%
+\usepackage{float}                        %%
+\def\beginmyfig{\begin{figure}[H]\center} %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\endmyfig{\end{figure}}
+\def\ds{\displaystyle}
+\def\tu{\textunderscore}
+\definecolor{grey}{rgb}{.2,.2,.2}
+\definecolor{lgrey}{rgb}{.8,.8,.8}
+\def\hline{ \textcolor{lgrey}{\hrulefill} }
+\newcommand{\m}[1]{\mathbf{\bm{#1}}} % Serif bold math
+\def\ds{\displaystyle}                                                    
+\def\inv{^{\raisebox{.2ex}{$\scriptscriptstyle-1$}}}
+%\def\pm{^{\raisebox{.2ex}{$\scriptscriptstyle\prime$}}}
+\def\norm#1{\left\lVert#1\right\rVert}
+\newcommand{\p}[1]{\left(#1\right)}
+\newcommand{\bk}[1]{\left[#1\right]}
+\newcommand{\bc}[1]{ \left\{#1\right\} }
+\newcommand{\abs}[1]{ \left|#1\right| }
+\newcommand{\mat}{ \begin{pmatrix} }
+\newcommand{\tam}{ \end{pmatrix} }
+
+% \def for THIS ASSIGNMENT!!!%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+% my title:
+\begin{center}
+  {\huge \textbf{AMS 268 Final Project - Gaussian Process and Variable Selection using Generalized Double Pareto Prior}
+    \footnote{\url{https://github.com/luiarthur/advBayesComputing/tree/master/project}}
+  }\\
+  \wl
+  \noindent\today\\
+  Arthur Lui\\
+  \hline
+\end{center}
+
+The purpose of this project is to investigate the value of using a generalized
+double Pareto prior on covariates of a Gaussian process for variable selection.
+This project is divided into five sections. The first section is a review of
+the Gaussian process model. The second section outlines the methodology. The
+third section discusses a simulation study for the effectiveness of the
+proposed method. The fourth section reviews the results of the simulation
+study. The fifth section contains concluding remarks.
+
+
+\section{Review of the Gaussian Process}
+A Gaussian process (GP) model can be used as a prior distribution for functions
+of covariates. Typically, when a response vector is assumed to be a nonlinear
+function of predictors $X$, a model can be constructed as follows to model
+the mean function $f(X)$
+\[
+  \begin{array}{rclcl}
+    y&|&f(X) &= &f(X) + \epsilon,~\epsilon \sim N(0,\sigma^2I)\\
+    f(X)&|&\bm\theta &\sim& GP(0,\kappa(\cdot,\cdot))\\
+        &&\bm\theta &\sim& p(\bm\theta)\\
+    \\
+    \Rightarrow y&|&\bm\theta &\sim& N(0,\sigma^2I + K) \\
+                 &&\bm\theta &\sim& p(\bm\theta)\\
+\end{array}
+\]
+
+where $\bm\theta = (\sigma^2,\phi,\tau)$, and $K_{ij} = \kappa(x_i,x_j)$, some
+covariance function. A simple choice for the covariance function is, for
+example, the exponential decay function
+\[
+  \kappa(x_i,x_j) = \tau \exp\bc{-\phi\sqrt{\sum_{k=1}^p (x_{ik}-x_{jk})^2}}.
+\]
+
+
+\section{Gaussian Process with Generalized Double Pareto Prior for Covariate Coefficients}
+The goal of this project is to fit the model to all the data and covariates and
+learn from the data using a shrinkage prior which covariates are important in
+the model. I attempt to accomplish this by fitting the model with a slightly
+different covariance function
+\[
+  \kappa(x_i,x_j) = \tau \exp\bc{-\phi\sqrt{\sum_{k=1}^p (x_{ik}-x_{jk})^2{d_k}^2}}.
+\]
+A parameter $d$ is introduced in the kernel. Intuitively, when $d_k^2$ is close
+to 0, covariate $k$ does not contribute to computing the distance between
+observations $i$ and $j$. That is, when $d_k$ is small, covariate $k$ does not
+influence the covariance structure. When $k$ is large, it contributes greatly
+to the model. Any shrinkage (heavy-tailed) prior could be used to model $d_k$,
+but here the generalized double Pareto prior is used
+\[
+  p(d_k) =  \frac{1}{2b}\p{1 + \frac{\abs{d_k}}{ab}}^{-a-1}
+\]
+for $k=1,\cdots,p$ , and $p$ is the number of covariates.
+
+
+\section{Simulation Study}
+A simulation study was conducted to test the usefulness of this model.
+Ideally, the model would be able to perform variable selection and 
+return reasonable values for the parameters $d_k$. The simulation 
+was conducted as follow:
+
+\begin{itemize}
+  \item Generate the predictors $x_{ik} \sim N(0,1)$, $~~~~i=1,\dots,100$, $k=1,\cdots,10$
+  \item Simulate responses $y$ using three different functions:
+    \begin{itemize}
+      \item[] $f_1$:~ $y_i =-.2x_{i1} + \sin(x_{i2})  + .3{x_{i3}}^2 + \epsilon_i$
+      \item[] $f_2$:~ $y_i =x_{i1}    + \sin(5x_{i2}) + \sin(x_{i3}) + \epsilon_i$
+      \item[] $f_3$:~ $y_i =3x_{i1}   - .3x_{i2}      + x_{i3}       + \epsilon_i$
+    \end{itemize}
+\end{itemize}
+where $\epsilon_i \sim N(0,\sigma^2=.5)$.\\
+
+A Bayesian GP model was fit to the data with 4000 burn in to obtain 2000 draws
+from the posterior for $\tau,\phi,\sigma^2$, and $d_1,\cdots,d_{10}$. A metropolis
+is required at each update, and a multivariate Normal proposal was used to propose
+the 13 parameters simultaneously to reduce the number of times the likelihood is 
+calculated. Inverse gamma priors were placed on $\sigma^2$ and $\tau$, and a uniform 
+(.1,5) prior was placed on $\phi$ 
+
+\section{Simulation Results}
+For the first function $f_1$, the posterior distribution for $\sigma^2, \phi$, and $\tau$
+are summarized in Figure \ref{fig:par1}.
+\beginmyfig 
+  \includegraphics[scale=.3]{../code/R/output/post1.pdf} 
+  \caption{Posterior distributions for $\sigma^2,\phi,\tau$ for data simulated
+  with $f_1:~f(\bm x) = -.2x_1 + \sin(x_2) + .3{x_3}^2$}
+  \label{fig:par1}
+\endmyfig 
+It appears that there is posterior learning for the three parameters. 
+The trace plots for the parameters $d_1,...,d_{10}$ are plotted in 
+Figure \ref{fig:trace1}. 
+\beginmyfig 
+  \includegraphics[scale=.3]{../code/R/output/trace1.pdf} 
+  \caption{Trace plots for $d_1,...,d_{10}$ for data simulated under $f_1:
+  ~f(\bm x) = -.2x_1 + \sin(x_2) + .3{x_3}^2$}
+  \label{fig:trace1}
+\endmyfig 
+The trace plots do not show signs of possible convergence. The posterior means
+with their 95\% HPD's are plotted for the $d_1,..,d_{10}$ parameters in Figure
+\ref{fig:postmean1}. The red dots correspond to the posterior means of
+``coefficients" the first three covariates, which are truly non-zero. We
+expected their HPD's to not contain zero.
+\beginmyfig 
+  \includegraphics[scale=.3]{../code/R/output/d1.pdf} 
+  \caption{Posterior mean for $d_1,...,d_{10}$ for data simulated under
+  $f_1~f(\bm x) = -.2x_1 + \sin(x_2) + .3{x_3}^2$}
+  \label{fig:postmean1}
+\endmyfig 
+From the Figure we see that the model may be useful in variable selection
+under this particular type of function $(f_1)$. The HPD's for the first 
+three variables do not contain 0. The fourth HPD does not include 0, and 
+the other HPD's either contain 0 or almost contain 0.\\
+
+Included below are the posterior means and HPD obtained from
+the data generated using the other functions $f_1$ and $f_3$.
+%2
+\beginmyfig 
+  \includegraphics[scale=.3]{../code/R/output/d2.pdf} 
+  \caption{Posterior mean for $d_1,...,d_{10}$ for data simulated under
+$f_2:~f(\bm x) = x_{i1} + \sin(5x_{i2}) + \sin(x_{i3})$}
+\endmyfig 
+For $f_2$, variable selection is not successful suggesting this may 
+not be a good model to fit when there are strong seasonal trends in the
+covariates.
+%3
+\beginmyfig 
+  \includegraphics[scale=.3]{../code/R/output/d3.pdf} 
+  \caption{Posterior mean for $d_1,...,d_{10}$ for data simulated under
+$f_3:~f(\bm x) = 3x_{i1} - .3x_{i2} + x_{i3} $}
+\endmyfig 
+For $f_3$, the true function is a linear function. The coefficient for the
+second covariate is shrunk to zero due to the true value being $.3$, which is
+close to 0. The first and third covariates are correctly included in the model
+and the other covariates are not included.
+
+%Preds
+Figures \ref{fig:pp1} to \ref{fig:pp3} summarize the posterior predictive distributions
+for the mean function. The light blue region is the 95\% credible regions for the
+mean function. The blue line is the posterior mean function. And the black dots
+are the generated data (response variable) for the simulation. In the plots, 
+the response is plotted in an increasing order for convenient visualization.
+It seems that the general trends are captured by the model. There is greater
+uncertainty in the second model $f_2$, which is expected because the data
+generating mechanism is more complex. The credible region for $f_3$, the linear
+model is clearly narrower than that of the other two functions. This suggests
+that when the true data generating mechanism is a linear model, the fitted model
+performs variable selection well and the predictions have little uncertainty.
+\beginmyfig 
+  \includegraphics[scale=.3]{../code/R/output/pred1.pdf} 
+  \caption{The posterior predictive under $f_1:~ f(\bm x) = -.2x_1 + \sin(x_2) + .3{x_3}^2$.
+  The light blue region is the 95\% credible region for the posterior
+  predictive mean function. The blue line is the posterior mean function. The
+  black dots are the generated data.}
+  \label{fig:pp1}
+\endmyfig 
+\beginmyfig 
+  \includegraphics[scale=.3]{../code/R/output/pred2.pdf} 
+  \caption{The posterior predictive under $f_2:~ f(\bm x) = x_{i1} + \sin(5x_{i2}) + \sin(x_{i3})$.  
+  The light blue region is the 95\% credible
+  region for the posterior predictive mean function. The blue line is the
+  posterior mean function. The black dots are the generated data.}
+  \label{fig:pp2}
+\endmyfig 
+\beginmyfig 
+  \includegraphics[scale=.3]{../code/R/output/pred3.pdf} 
+  \caption{The posterior predictive under $f_3:~ f(\bm x) = 3x_{i1} - .3x_{i2} + x_{i3} $.
+  The light blue region is the 95\% credible region for the posterior predictive mean function. The blue
+  line is the posterior mean function. The black dots are the generated data.}
+  \label{fig:pp3}
+\endmyfig 
+
+\section{Conclusions}
+The proposed model was studied for $n=100$ and $p=10$. The model performs
+poorly when $p>10$ and $n=100$. The model performs well when the true mean
+function is linear. When the model is more complicated, it seems the model does
+not perform well. I would not recommend the use this technique for variable
+selection in practice because this technique only performs well when the true
+model is linear. In such cases, a simpler (linear) model can be fit and the
+flexibility of the GP is not utilized. Possible items to investigate could be
+using a different structure in the covariance kernel while still making use of
+the generalized double Pareto prior on the ``coefficient''. Also one could try
+putting different priors on the individual $d_1,..,d_p$ parameters to see if
+the performance of the model improves.
+
+\end{document}
